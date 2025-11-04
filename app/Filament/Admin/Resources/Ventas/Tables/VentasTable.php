@@ -1,0 +1,128 @@
+<?php
+
+namespace App\Filament\Admin\Resources\Ventas\Tables;
+
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use App\Models\Departamento;
+use App\Models\Venta;
+use App\Models\Desarrollo;
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\DeleteAction;
+use Illuminate\Support\Facades\DB; // AGREGADO: Importa la fachada DB
+
+class VentasTable
+{
+    public static function configure(Table $table): Table
+    {
+        return $table
+            ->groups([
+                'departamento.desarrollo.nombre'
+            ])
+            ->defaultGroup('departamento.desarrollo.nombre') // Aplica el grupo por defecto.
+            ->columns([
+                // Columna para el departamento, ya la tenías bien configurada.
+                TextColumn::make('departamento.numero')
+                    ->label('Depto.')
+                    ->sortable()
+                    ->searchable()
+                    ->description(fn(Venta $record): string => "Modelo: {$record->departamento->modelo}"),
+                TextColumn::make('clientes.nombre')
+                    ->label('Cliente(s)')
+                    // ->badge() // 1. Quitas el estilo de badge
+                    ->bulleted() // 2. Usas este método para una lista con viñetas
+                    ->getStateUsing(fn($record) => $record->clientes->map(fn($cliente) => "{$cliente->nombre} {$cliente->apellidos}")->all())
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHas('clientes', function (Builder $q) use ($search) {
+                            // CORREGIDO: Usar \Illuminate\Support\Facades\DB o la importación
+                            $q->where(DB::raw("CONCAT(nombre, ' ', apellidos)"), 'like', "%{$search}%");
+                        });
+                    }),
+
+                TextColumn::make('fecha')
+                    ->label('Fecha Venta')
+                    ->date('d/m/Y')
+                    ->sortable(),
+
+                TextColumn::make('monto_total_venta')
+                    ->label('Monto Total')
+                      ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
+                     ->color('success')
+                      ->sortable(),
+
+                TextColumn::make('enganche')
+                     ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
+                    ->sortable()
+                    ->color('warning')
+                    ->toggleable(isToggledHiddenByDefault: false), // Oculto por defecto para limpiar la vista.
+
+                TextColumn::make('n_pagos')
+                    ->label('N° Pagos')
+                    ->numeric()
+                    ->sortable()
+                    ->badge()
+                    ->toggleable(isToggledHiddenByDefault: false), // Oculto por defecto.
+
+                // Las fechas de auditoría se mantienen al final y ocultas.
+                TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                TernaryFilter::make('enganche')
+                    ->label('Tiene Enganche')
+                    ->boolean()
+                    ->trueLabel('Con Enganche')
+                    ->falseLabel('Sin Enganche')
+                    ->queries(
+                        true: fn(Builder $query) => $query->where('enganche', '>', 0),
+                        false: fn(Builder $query) => $query->where('enganche', '=', 0),
+                    ),
+
+                // Se mantiene el filtro de rango de fechas.
+                Filter::make('fecha')
+                    ->form([
+                        DatePicker::make('fecha_desde')->label('Ventas desde'),
+                        DatePicker::make('fecha_hasta')->label('Ventas hasta'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['fecha_desde'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('fecha', '>=', $date),
+                            )
+                            ->when(
+                                $data['fecha_hasta'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('fecha', '<=', $date),
+                            );
+                    }),
+            ])
+            ->actions([
+                // 7. Acciones de Fila Agrupadas para una UI más limpia
+                ActionGroup::make([
+                    ViewAction::make()->icon('heroicon-s-eye'),
+                    EditAction::make()->icon('heroicon-s-pencil'),
+                    DeleteAction::make()->icon('heroicon-s-trash'),
+                ]),
+            ])
+            ->bulkActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ])
+            ->defaultSort('fecha', 'desc'); // Ordena por la venta más reciente primero.
+    }
+}

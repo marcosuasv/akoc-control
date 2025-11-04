@@ -15,4 +15,4 @@ El objetivo principal es centralizar la información financiera, mejorar la efic
 
 ### Estado del Proyecto
 
-Actualmente, el proyecto se encuentra en la fase de análisis y definición de la arquitectura.
+Actualmente, el proyecto se encuentra en desarrollo.

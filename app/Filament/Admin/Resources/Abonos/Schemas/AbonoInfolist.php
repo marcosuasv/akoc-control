@@ -14,21 +14,21 @@ use App\Filament\Admin\Resources\Ventas\VentaResource; // Asumido
 use App\Filament\Admin\Resources\Departamentos\DepartamentoResource; // Asumido
 use Filament\Actions\Action;
 use Illuminate\Support\Facades\Auth;
-
+use App\Models\Venta;
 class AbonoInfolist
 {
     public static function configure(Schema $schema): Schema
     {
         return $schema
             ->components([
-                
+
                 Section::make('Detalles del Abono')
                     ->icon('heroicon-s-currency-dollar')
                     ->columns(3)
                     ->schema([
                         TextEntry::make('monto')
                             ->label('Monto Abonado')
-                            ->money('MXN') 
+                            ->money('MXN')
                             ->icon('heroicon-s-banknotes')
                             ->columnSpan(1),
 
@@ -37,8 +37,8 @@ class AbonoInfolist
                             ->date()
                             ->icon('heroicon-s-calendar-days')
                             ->columnSpan(1),
-                        
-                        TextEntry::make('user.name') 
+
+                        TextEntry::make('user.name')
                             ->label('Registrado por')
                             ->icon('heroicon-s-user')
                             ->placeholder('N/A')
@@ -48,14 +48,14 @@ class AbonoInfolist
                             ->label('Comentarios')
                             ->columnSpanFull()
                             ->placeholder('Sin comentarios.')
-                            ->visible(fn ($state) => !empty($state)), 
+                            ->visible(fn($state) => !empty($state)),
 
                         TextEntry::make('created_at')
                             ->label('Fecha de Registro')
                             ->dateTime()
                             ->placeholder('-')
                             ->columnSpan(1),
-                        
+
                         TextEntry::make('updated_at')
                             ->label('Última Actualización')
                             ->dateTime()
@@ -63,15 +63,15 @@ class AbonoInfolist
                             ->columnSpan(1),
                     ]),
 
-                Section::make('Pago Asociado (Origen del Dinero)')
+                Section::make('Depósito Asociado (Origen del Dinero)')
                     ->icon('heroicon-s-receipt-percent')
-                    ->relationship('pago') 
+                    ->relationship('pago')
                     ->columns(3)
                     ->schema([
                         TextEntry::make('id')
-                            ->label('ID del Pago')
+                            ->label('ID Depósito')
                             ->badge()
-                            ->url(function (Model $record): string { // $record es el Pago
+                            ->url(function (Model $record): string {
                                 $user = Auth::user();
                                 if ($user->hasRole('super_admin')) {
                                     return "http://10.2.0.170:8090/admin/pagos/{$record->id}";
@@ -96,7 +96,7 @@ class AbonoInfolist
                         TextEntry::make('cantidad_general')
                             ->label('Monto Total del Pago')
                             ->money('MXN'),
-                        
+
                         TextEntry::make('metodo_pago')
                             ->label('Método de Pago')
                             ->badge(),
@@ -106,14 +106,13 @@ class AbonoInfolist
                             ->copyable()
                             ->placeholder('N/A')
                             ->columnSpan(2),
-                        
+
                         IconEntry::make('validacion')
                             ->label('Pago Validado')
-                            ->boolean(), 
+                            ->boolean(),
                     ]),
 
-                // --- 👇 SECCIÓN CORREGIDA Y MEJORADA 👇 ---
-                
+
                 Section::make('Cuota y Venta Aplicada (Destino del Dinero)')
                     ->icon('heroicon-s-document-check')
                     ->relationship('planPago') // La relación correcta
@@ -128,7 +127,7 @@ class AbonoInfolist
                             ->label('Monto Total de la Cuota')
                             ->money('MXN')
                             ->columnSpan(1),
-                        
+
                         TextEntry::make('saldo') // Usa el Accessor del modelo PlanPago
                             ->label('Saldo Restante de la Cuota')
                             ->money('MXN')
@@ -140,36 +139,41 @@ class AbonoInfolist
                             ->date()
                             ->columnSpan(1),
 
-                        // Link a la Venta (a través de planPago.venta)
                         TextEntry::make('venta.id')
                             ->label('ID Venta')
                             ->badge()
                             ->color('primary')
-                            ->url(function (Model $record): string { // $record es la Venta
+                            ->url(function (Model $record): string {
                                 $user = Auth::user();
+                                $ventaId = $record->venta_id;
                                 if ($user->hasRole('super_admin')) {
-                                    return "http://10.2.0.170:8090/admin/ventas/{$record->id}";
+                                    return "http://10.2.0.170:8090/admin/ventas/{$ventaId}";
                                 }
                                 if ($user->hasRole('vendedor')) {
-                                    return "http://10.2.0.170:8090/vendedor/ventas/{$record->id}";
+                                    return "http://10.2.0.170:8090/vendedor/ventas/{$ventaId}";
+
                                 }
                                 return '#';
                             })
                             ->openUrlInNewTab()
                             ->columnSpan(1),
 
-                        // Link al Departamento (a través de planPago.venta.departamento)
                         TextEntry::make('venta.departamento.numero')
                             ->label('Departamento')
                             ->badge()
                             ->color('info')
-                            ->url(function (Model $record): string { // $record es el Departamento
+                            ->url(function (Model $record): string {
                                 $user = Auth::user();
+                                $venta = Venta::find($record->venta_id);
+                                $departamentoId = $venta ? $venta->departamento_id : 0;
+                                if (!$departamentoId) {
+                                    return '#';
+                                }
                                 if ($user->hasRole('super_admin')) {
-                                    return "http://10.2.0.170:8090/admin/departamentos/{$record->id}";
+                                    return "http://10.2.0.170:8090/admin/departamentos/{ $departamentoId}";
                                 }
                                 if ($user->hasRole('vendedor')) {
-                                    return "http://10.2.0.170:8090/vendedor/departamentos/{$record->id}";
+                                    return "http://10.2.0.170:8090/vendedor/departamentos/{ $departamentoId}";
                                 }
                                 return '#';
                             })

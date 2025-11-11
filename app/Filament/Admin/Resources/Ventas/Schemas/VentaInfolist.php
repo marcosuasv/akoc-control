@@ -8,6 +8,8 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Infolists\Components\RepeatableEntry;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
+
 class VentaInfolist
 {
     public static function configure(Schema $schema): Schema
@@ -86,7 +88,6 @@ class VentaInfolist
                                     ->schema([
                                         TextEntry::make('nombre_completo')
                                             ->label('Nombre Cliente')
-                                            
                                             ->getStateUsing(fn(\App\Models\Cliente $record): string => "{$record->nombre} {$record->apellidos}")
                                             ->columnSpanFull() 
                                             ->icon('heroicon-s-user'),
@@ -94,13 +95,13 @@ class VentaInfolist
                                         TextEntry::make('correo')
                                             ->label('Correo')
                                             ->icon('heroicon-s-envelope')
-                                            ->copyable() // Permite copiar el correo
+                                            ->copyable() 
                                             ->placeholder('N/A'),
 
                                         TextEntry::make('telefono')
                                             ->label('Teléfono')
                                             ->icon('heroicon-s-phone')
-                                            ->copyable() // Permite copiar el teléfono
+                                            ->copyable() 
                                             ->placeholder('N/A'),
 
                                         TextEntry::make('direccion')
@@ -162,8 +163,7 @@ class VentaInfolist
                             ->label('') 
                             ->columnSpanFull()
                             ->schema([
-                               
-                                Grid::make(4)
+                                Grid::make(5) 
                                     ->schema([
                                         TextEntry::make('numero_pago')
                                             ->label('# Pago')
@@ -174,22 +174,78 @@ class VentaInfolist
                                             ->date('d/m/Y'),
                                             
                                         TextEntry::make('monto')
-                                            ->label('Monto')
+                                            ->label('Monto Cuota')
                                             ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2)),
-                                            
+                                        
+                                        TextEntry::make('saldo') 
+                                            ->label('Saldo Pendiente')
+                                            ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2))
+                                            ->color('warning')
+                                            ->visible(fn ($record) => $record->status !== 'pagado'), 
+
                                         TextEntry::make('status')
                                             ->label('Estatus')
                                             ->badge()
                                             ->color(fn(string $state): string => match ($state) {
                                                 'pagado' => 'success',
+                                                'parcial' => 'info', 
                                                 'pendiente' => 'warning',
                                                 default => 'gray',
                                             })
-                                            ->formatStateUsing(fn(string $state): string => ucfirst($state)),
+                                            ->formatStateUsing(fn(string $state): string => match ($state) { 
+                                                'pagado' => 'Pagado',
+                                                'parcial' => 'Parcial',
+                                                'pendiente' => 'Pendiente',
+                                                default => ucfirst($state),
+                                            }),
+                                    ]),
+
+                                Section::make('Abonos Recibidos en esta Cuota')
+                                    ->icon('heroicon-s-clipboard-document-list')
+                                    ->collapsible() 
+                                    ->collapsed()   
+                                    ->columnSpanFull()
+                                    ->visible(fn ($record) => $record->abonos->count() > 0)
+                                    ->schema([
+                                        RepeatableEntry::make('abonos') 
+                                            ->label('')
+                                            ->columnSpanFull()
+                                            ->schema([
+                                                Grid::make(4)
+                                                    ->schema([
+                                                        TextEntry::make('pago.id') 
+                                                            ->label('ID Depósito')
+                                                            ->badge()
+                                                            ->url(function (Model $record): string {
+                                                                $user = Auth::user();
+                                                                if ($user->hasRole('super_admin')) {
+                                                                    return "http://10.2.0.170:8090/admin/pagos/{$record->pago_id}";
+                                                                }
+                                                                if ($user->hasRole('vendedor')) {
+                                                                    return "http://10.2.0.170:8090/vendedor/pagos/{$record->pago_id}";
+                                                                }
+                                                                return '#';
+                                                            })
+                                                            ->openUrlInNewTab()
+
+                                                            ->color('info'),
+                                                        
+                                                        TextEntry::make('fecha_abono')
+                                                            ->label('Fecha del Abono')
+                                                            ->date('d/m/Y'),
+
+                                                        TextEntry::make('monto')
+                                                            ->label('Monto Abonado')
+                                                            ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2)),
+                                                        
+                                                        TextEntry::make('user.name')
+                                                            ->label('Registrado por')
+                                                            ->placeholder('N/A'),
+                                                    ])
+                                            ])
                                     ])
                             ]),
                     ]),
-
             ]);
     }
 }

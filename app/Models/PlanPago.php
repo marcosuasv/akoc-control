@@ -29,10 +29,9 @@ class PlanPago extends Model
         'fecha_pago',
     ];
     
-    /**
-     * Define la relación inversa con Venta.
-     * Cada registro de pago pertenece a una única venta.
-     */
+    protected $casts = [
+        'fecha_vencimiento' => 'date',
+    ];
     public function venta(): BelongsTo
     {
         return $this->belongsTo(Venta::class);

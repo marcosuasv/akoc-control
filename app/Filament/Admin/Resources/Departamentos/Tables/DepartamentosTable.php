@@ -25,59 +25,54 @@ class DepartamentosTable
                     ->searchable()
                     ->sortable()
                     ->weight('bold')
-                    ->description(fn (Departamento $record): string => "Piso {$record->piso} / Mod. {$record->modelo}"),
+                    ->description(fn(Departamento $record): string => "Piso {$record->piso} / Mod. {$record->modelo}"),
 
                 TextColumn::make('estatus')
                     ->label('Estatus')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
                         'Disponible' => 'Disponible',
                         'Vendido' => 'Vendido',
                         'Reservado' => 'Reservado',
                         default => $state,
                     })
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'Disponible' => 'success',
                         'Vendido' => 'danger',
                         'Reservado' => 'info',
                         default => 'gray',
                     }),
-                
+
                 TextColumn::make('venta.monto_total_venta')
                     ->label('Costo Venta')
-                    ->default(fn (Departamento $record) => $record->precio)
-                    ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
+                    ->default(fn(Departamento $record) => $record->precio)
+                    ->formatStateUsing(fn(float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
                     ->sortable(),
 
                 TextColumn::make('abonos_acumulados')
                     ->label('Abonado')
-                    // Corrección de robustez: Verificamos la existencia de venta antes de sumar abonos
                     ->getStateUsing(function (Departamento $record): ?float {
                         if (is_null($record->venta)) {
                             return 0.0;
                         }
-                        // Usamos la relación abonos() en la venta existente
-                        return $record->venta->abonos()->sum('monto') ?? 0.0;
+
+                        return $record->venta->abonos()->sum('abonos.monto') ?? 0.0; // <-- ¡Corregido!
                     })
-                    ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
+                    ->formatStateUsing(fn(float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
                     ->color('success')
                     ->sortable(),
 
                 TextColumn::make('saldo_pendiente')
                     ->label('Saldo Pendiente')
-                    // Corrección de robustez: Verificamos la existencia de venta para calcular
                     ->getStateUsing(function (Departamento $record): ?float {
                         $costo = $record->precio ?? 0.0;
                         $abonado = 0.0;
-
                         if (!is_null($record->venta)) {
                             $costo = $record->venta->monto_total_venta ?? $record->precio ?? 0.0;
-                            $abonado = $record->venta->abonos()->sum('monto') ?? 0.0;
-                        }
-
-                        return $costo - $abonado;
+                            $abonado = $record->venta->abonos()->sum('abonos.monto') ?? 0.0;
+                        }return $costo - $abonado;
                     })
-                    ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
+                    ->formatStateUsing(fn(float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
                     ->color(function (float $state): string {
                         return $state > 0 ? 'warning' : 'success';
                     })
@@ -86,7 +81,7 @@ class DepartamentosTable
                 TextColumn::make('recamaras')
                     ->label('Recs.')
                     ->alignCenter(),
-                
+
                 TextColumn::make('estacionamientos')
                     ->label('Estacs.')
                     ->alignCenter(),
@@ -96,7 +91,7 @@ class DepartamentosTable
                     ->dateTime('d M Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                
+
                 TextColumn::make('updated_at')
                     ->label('Actualizado')
                     ->dateTime('d M Y H:i')
@@ -122,7 +117,7 @@ class DepartamentosTable
                 ViewAction::make(),
                 EditAction::make(),
             ])
-           
+
             ->bulkActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

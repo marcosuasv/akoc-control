@@ -26,7 +26,10 @@ class Abono extends Model
         'plan_pago_id'    
     ];
 
+protected $casts = [
+        'fecha_abono' => 'date',
 
+    ];
     public function pago():BelongsTo
     {
         return $this->belongsTo(Pago::class);
@@ -42,7 +45,6 @@ class Abono extends Model
     }
     public function planPago(): BelongsTo
     {
-        // Apunta al modelo PlanPago
         return $this->belongsTo(PlanPago::class);
     }
 }

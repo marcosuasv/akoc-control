@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CotizacionController;
+use App\Http\Controllers\EstadoDeCuentaController;
 
 // Redirige la raíz a tu login central
 Route::get('/', function () {
@@ -26,3 +27,6 @@ Route::get('/ver-comprobante/{filename}', function ($filename) {
 
     return response()->file($path);
 })->name('ver-comprobante');
+Route::get('/ventas/{venta}/estado-de-cuenta', [EstadoDeCuentaController::class, 'show'])
+    ->name('ventas.estado-de-cuenta')
+    ->middleware('auth');

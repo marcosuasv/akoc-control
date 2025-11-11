@@ -33,11 +33,11 @@ class DepartamentoInfolist
 
                                         $user = Auth::user();
                                         if ($user->hasRole('super_admin')) {
-                                            return "http://10.2.0.170:8090/admin/desarrollos/{$record->id}";
+                                            return "http://10.2.0.170:8090/admin/desarrollos/{$record->desarrollo_id}";
                                         }
 
                                         if ($user->hasRole('vendedor')) {
-                                            return "http://10.2.0.170:8090/vendedor/desarrollos/{$record->id}";
+                                            return "http://10.2.0.170:8090/vendedor/desarrollos/{$record->desarrollo_id}";
                                         }
 
                                         return '#';
@@ -58,10 +58,20 @@ class DepartamentoInfolist
                                 TextEntry::make('m2_construccion')
                                     ->label('M² Total Construcción')
                                     ->suffix(' m²'),
+                                TextEntry::make('precio')
+                                    ->label('Precio')
+                                    ->size('lg')
+                                    ->weight('bold')
+                                    ->formatStateUsing(fn(?float $state) => '$' . number_format($state ?? 0, 2, '.', ',') . ' MXN')
+                                    ->color('primary'),
 
                                 TextEntry::make('m2_terraza')
                                     ->label('Precio M²')
-                                    ->suffix(' m²'),
+                                    ->size('md')
+                                     ->weight('bold')
+                                    ->color(    'secondary')
+                                   ->money(currency: 'MXN', locale: 'es_MX') 
+                                    ->suffix(' / m²'),
 
                                 TextEntry::make('recamaras')
                                     ->label('Recámaras'),
@@ -115,7 +125,7 @@ class DepartamentoInfolist
                                         }
                                         return $record->venta->abonos()
                                             ->whereHas('pago', fn($query) => $query->where('metodo_pago', 'transferencia'))
-                                            ->sum('monto');
+                                            ->sum('abonos.monto');
                                     })
                                     ->formatStateUsing(fn(float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
                                     ->color('gray')
@@ -130,7 +140,7 @@ class DepartamentoInfolist
                                         }
                                         return $record->venta->abonos()
                                             ->whereHas('pago', fn($query) => $query->where('metodo_pago', 'efectivo'))
-                                            ->sum('monto');
+                                            ->sum('abonos.monto');
                                     })
                                     ->formatStateUsing(fn(float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
                                     ->color('gray')
@@ -145,7 +155,7 @@ class DepartamentoInfolist
                                         }
                                         return $record->venta->abonos()
                                             ->whereHas('pago', fn($query) => $query->where('metodo_pago', 'tarjeta'))
-                                            ->sum('monto');
+                                            ->sum('abonos.monto');
                                     })
                                     ->formatStateUsing(fn(float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
                                     ->color('gray')
@@ -160,7 +170,7 @@ class DepartamentoInfolist
                                         }
                                         return $record->venta->abonos()
                                             ->whereHas('pago', fn($query) => $query->where('metodo_pago', 'cheque'))
-                                            ->sum('monto');
+                                            ->sum('abonos.monto');
                                     })
                                     ->formatStateUsing(fn(float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
                                     ->color('gray')
@@ -175,7 +185,7 @@ class DepartamentoInfolist
                                         }
                                         return $record->venta->abonos()
                                             ->whereHas('pago', fn($query) => $query->where('metodo_pago', 'otro'))
-                                            ->sum('monto');
+                                            ->sum('abonos.monto');
                                     })
                                     ->formatStateUsing(fn(float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
                                     ->color('gray')
@@ -188,7 +198,7 @@ class DepartamentoInfolist
                                         if (!$record->relationLoaded('venta') || !$record->venta) {
                                             return 0.0;
                                         }
-                                        $abonos = $record->venta->abonos()->sum('monto') ?? 0.0;
+                                        $abonos = $record->venta->abonos()->sum('abonos.monto') ?? 0.0;
                                         return $abonos;
                                     })
                                     ->formatStateUsing(fn(float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
@@ -206,7 +216,7 @@ class DepartamentoInfolist
                                         }
 
                                         $enganche = $record->venta->enganche ?? 0.0;
-                                        $abonos = $record->venta->abonos()->sum('monto') ?? 0.0;
+                                        $abonos = $record->venta->abonos()->sum('abonos.monto') ?? 0.0;
                                         $total_pagado = $enganche + $abonos;
 
                                         return $costo - $total_pagado;
@@ -277,88 +287,99 @@ class DepartamentoInfolist
                                     ->dateTime(),
                             ]),
                     ]),
-
-                Section::make('Historial de Abonos Aplicados a esta Venta')
+                
+                Section::make('Plan de Pagos de la Venta')
+                    ->icon('heroicon-s-table-cells')
                     ->columnSpanFull()
+                    ->collapsible()
+                    ->collapsed()
                     ->hidden(fn(Departamento $record) => is_null($record->venta))
                     ->schema([
-                        RepeatableEntry::make('venta.abonos')
-                            ->label('Abonos Registrados')
+                        RepeatableEntry::make('venta.planPagos')
+                            ->label('') 
+                            ->columnSpanFull()
                             ->schema([
-                                Grid::make(6)->schema([
-                                    TextEntry::make('id')
-                                        ->label('ID Abono')
-                                        ->url(function (Model $record): string {
-
-                                            $user = Auth::user();
-                                            if ($user->hasRole('super_admin')) {
-                                                return "http://10.2.0.170:8090/admin/abonos/{$record->id}";
-                                            }
-
-                                            if ($user->hasRole('vendedor')) {
-                                                return "http://10.2.0.170:8090/vendedor/abonos/{$record->id}";
-                                            }
-
-                                            return '#';
-
-                                        })
-                                        ->openUrlInNewTab()
-                                        ->color('warning')
-                                        ->weight('bold'),
-
-                                    TextEntry::make('monto')
-                                        ->label('Monto Abonado')
-                                        ->money('MXN')
-                                        ->weight('bold')
-                                        ->color('success'),
-
-                                    TextEntry::make('fecha_abono')
-                                        ->label('Fecha Abono')
-                                        ->date('d/m/Y'),
-
-                                    TextEntry::make('pago.metodo_pago')
-                                        ->label('Método de Pago')
-                                        ->badge()
-                                        ->formatStateUsing(fn(string $state): string => ucfirst($state))
-                                        ->color(fn(string $state): string => match ($state) {
-                                            'transferencia' => 'primary',
-                                            'efectivo' => 'success',
-                                            default => 'gray',
-                                        }),
-
-                                    TextEntry::make('pago_id')
-                                        ->label('ID Pago (Recibo)')
-                                        ->url(function (Model $record): string {
-
-                                            $user = Auth::user();
-                                            if ($user->hasRole('super_admin')) {
-                                                return "http://10.2.0.170:8090/admin/pagos/{$record->pago_id}";
-                                            }
-
-                                            if ($user->hasRole('vendedor')) {
-                                                return "http://10.2.0.170:8090/vendedor/pagos/{$record->pago_id}";
-                                            }
-
-                                            return '#';
-
-                                        })
+                                Grid::make(5) 
+                                    ->schema([
+                                        TextEntry::make('numero_pago')
+                                            ->label('# Pago')
+                                            ->badge(),
+                                            
+                                        TextEntry::make('fecha_vencimiento')
+                                            ->label('Vencimiento')
+                                            ->date('d/m/Y'),
+                                            
+                                        TextEntry::make('monto')
+                                            ->label('Monto Cuota')
+                                            ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2)),
                                         
-                                        ->openUrlInNewTab()
-                                        ->color('info'),
+                                        TextEntry::make('saldo') 
+                                            ->label('Saldo Pendiente')
+                                            ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2))
+                                            ->color('warning')
+                                            ->visible(fn ($record) => $record->status !== 'pagado'),
 
-                                    TextEntry::make('user.name')
-                                        ->label('Registrado Por')
-                                        ->placeholder('N/A'),
+                                        TextEntry::make('status')
+                                            ->label('Estatus')
+                                            ->badge()
+                                            ->color(fn(string $state): string => match ($state) {
+                                                'pagado' => 'success',
+                                                'parcial' => 'info', 
+                                                'pendiente' => 'warning',
+                                                default => 'gray',
+                                            })
+                                            ->formatStateUsing(fn(string $state): string => match ($state) { 
+                                                'pagado' => 'Pagado',
+                                                'parcial' => 'Parcial',
+                                                'pendiente' => 'Pendiente',
+                                                default => ucfirst($state),
+                                            }),
+                                    ]),
 
-                                    TextEntry::make('comentarios')
-                                        ->label('Comentarios')
-                                        ->placeholder('Sin comentarios.')
-                                        ->columnSpanFull(),
-                                ]),
-                            ])
+                                Section::make('Abonos Recibidos en esta Cuota')
+                                    ->icon('heroicon-s-clipboard-document-list')
+                                    ->collapsible() 
+                                    ->collapsed()   
+                                    ->columnSpanFull()
+                                    ->visible(fn ($record) => $record->abonos->count() > 0)
+                                    ->schema([
+                                        RepeatableEntry::make('abonos')
+                                            ->label('')
+                                            ->columnSpanFull()
+                                            ->schema([
+                                                Grid::make(4)
+                                                    ->schema([
+                                                        TextEntry::make('pago.id') 
+                                                            ->label('ID Depósito Origen')
+                                                            ->badge()
+                                                            ->url(function (Model $record): string {
+                                                                $user = Auth::user();
+                                                                if ($user->hasRole('super_admin')) {
+                                                                    return "http://10.2.0.170:8090/admin/pagos/{$record->pago_id}";
+                                                                }
+                                                                if ($user->hasRole('vendedor')) {
+                                                                    return "http://10.2.0.170:8090/vendedor/pagos/{$record->pago_id}";
+                                                                }
+                                                                return '#';
+                                                            })
+                                                            ->openUrlInNewTab()
+                                                            ->color('info'),
+                                                        
+                                                        TextEntry::make('fecha_abono')
+                                                            ->label('Fecha del Abono')
+                                                            ->date('d/m/Y'),
 
-                            ->contained(true)
-                            ->grid(1),
+                                                        TextEntry::make('monto')
+                                                            ->label('Monto Abonado')
+                                                            ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2)),
+                                                        
+                                                        TextEntry::make('user.name')
+                                                            ->label('Registrado por')
+                                                            ->placeholder('N/A'),
+                                                    ])
+                                            ])
+                                    ])
+                            ]),
                     ]),
             ]);
     }

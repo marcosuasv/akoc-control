@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 class Venta extends Model
 {
     use HasFactory;
@@ -22,7 +22,10 @@ class Venta extends Model
         'departamento_id',
         'preciom2',
     ];
+    protected $casts = [
+        'fecha' => 'datetime', // o 'date' si no guardas la hora
 
+    ];
     public function clientes(): BelongsToMany
     {
         return $this->belongsToMany(Cliente::class, 'cliente_venta');
@@ -33,13 +36,12 @@ class Venta extends Model
         return $this->hasMany(PlanPago::class);
     }
 
-
     public function departamento(): BelongsTo
     {
         return $this->belongsTo(Departamento::class);
     }
-    public function abonos(): HasMany
+    public function abonos(): HasManyThrough
     {
-        return $this->hasMany(Abono::class);
+        return $this->hasManyThrough(Abono::class, PlanPago::class);
     }
 }

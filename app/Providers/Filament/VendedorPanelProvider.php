@@ -48,6 +48,7 @@ class VendedorPanelProvider extends PanelProvider
             ->widgets([
                 AccountWidget::class,
                 FilamentInfoWidget::class,
+                \App\Filament\Widgets\ListadoCobranzaWidget::class,
             ])
             ->resources([
                 ClienteResource::class,

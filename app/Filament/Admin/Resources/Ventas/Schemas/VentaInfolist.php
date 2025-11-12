@@ -61,8 +61,9 @@ class VentaInfolist
                             ->label('Precio de Lista')
                             ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN'),
                         TextEntry::make('m2_construccion')
-                            ->label('M² Construcción')
-                            ->suffix(' m²'),
+                            ->label('Precio M²')
+                             ->money(currency: 'MXN', locale: 'es_MX') 
+                            ->suffix('/ m²'),
                         TextEntry::make('m2_terraza')
                             ->label('M² Terraza')
                             ->suffix(' m²'),

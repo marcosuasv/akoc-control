@@ -47,8 +47,8 @@ class VendedorPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Vendedor/Widgets'), for: 'App\Filament\Vendedor\Widgets')
             ->widgets([
                 AccountWidget::class,
-                FilamentInfoWidget::class,
-                \App\Filament\Widgets\ListadoCobranzaWidget::class,
+                //FilamentInfoWidget::class,
+                //\App\Filament\Widgets\ListadoCobranzaWidget::class,
             ])
             ->resources([
                 ClienteResource::class,

@@ -170,7 +170,7 @@
             <tr>
                 <td class="logo-cell">
                     @php
-                        $logoPath1 = public_path('images/logoakoc.png');
+                        $logoPath1 = public_path('images/ENTREPISO.png');
                     @endphp
 
                     @if(file_exists($logoPath1))

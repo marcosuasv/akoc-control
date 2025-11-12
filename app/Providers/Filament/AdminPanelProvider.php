@@ -26,6 +26,8 @@ use Filament\Navigation\NavigationItem;
 use App\Models\Desarrollo;
 use Filament\Navigation\NavigationBuilder;
 use App\Filament\Admin\Resources\Desarrollos\DesarrolloResource;
+use App\Filament\Pages\Settings;
+use Filament\Actions\Action;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -49,9 +51,10 @@ class AdminPanelProvider extends PanelProvider
              ->brandLogoHeight('4rem')
             ->favicon(fn() => asset('images/icono.png'))
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
+            ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\Filament\Admin\Pages')
             ->widgets([
                 AccountWidget::class,
-                FilamentInfoWidget::class,
+                //FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -64,43 +67,6 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            /*
-            ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
-
-                // 1. Preparamos el array de sub-items dinámicos
-                $desarrolloSubItems = Desarrollo::all()->map(fn (Desarrollo $desarrollo) =>
-                    NavigationItem::make($desarrollo->nombre) // Nombre del desarrollo
-                        ->url(DesarrolloResource::getUrl('view', ['record' => $desarrollo]))
-                        ->icon('heroicon-o-building-office') // Ícono opcional para sub-items
-                )->all();
-
-                return $builder->groups([
-                    NavigationGroup::make('Gestión Inmobiliaria')
-                        ->items([
-                            // ... tus otros enlaces como 'Departamentos'
-                        ]),
-
-                    // 2. Creamos el grupo "Desarrollos"
-                    NavigationGroup::make('Desarrollos')
-                        ->items(array_merge(
-                            [
-                                // 3. El PRIMER item es el enlace principal al listado
-                                NavigationItem::make('Listado de Desarrollos')
-                                    ->url(DesarrolloResource::getUrl('index')) // URL al listado general
-                                    ->icon('heroicon-o-building-library') // Ícono principal
-                                    ->isActiveWhen(fn () => request()->routeIs(DesarrolloResource::getRouteBaseName() . '.index')),
-                            ],
-                            // 4. Fusionamos con el resto de sub-items dinámicos
-                            $desarrolloSubItems
-                        )),
-
-                    NavigationGroup::make('Filament Shield')
-                        ->items([
-                            // ... Users, Roles, etc.
-                        ]),
-                ]);
-            })
-*/
             ->plugins([
                 FilamentShieldPlugin::make(),
                 FilamentAwinTheme::make()

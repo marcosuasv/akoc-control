@@ -1,13 +1,35 @@
-<x-filament-panels::page>    
-    <div style="background-color: #ffffff; border-radius: 0.75rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);">
-        
-        <div style="padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
-            <h3 style="font-size: 1rem; font-weight: 600; line-height: 1.25rem;">
-                Proyección de Cobranza
+<x-filament-panels::page> 
+    <div style="margin-top: -1.5rem;"> 
+        <div style="background-color: #ffffff; border-radius: 0.75rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);">
+            
+            <div style="padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
             </h3>
         </div>
         
         <div style="padding: 1.5rem;">
+
+            <!-- ================================= -->
+            <!-- ===== INICIO: FILTRO NUEVO ====== -->
+            <!-- ================================= -->
+            <div style="margin-bottom: 1.5rem;">
+                <label for="desarrollo_filter" style="display: block; font-size: 0.875rem; font-weight: 500; color: #111827; margin-bottom: 0.5rem;">
+                    Filtrar por Proyecto
+                </label>
+                <select id="desarrollo_filter"
+                    wire:model.live="selectedDesarrolloId"
+                    style="width: 100%; max-width: 400px; border-radius: 0.375rem; border: 1px solid #d1d5db; padding: 0.5rem 1rem; background-color: #ffffff; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);"
+                >
+                    <option value="">Todos los Proyectos</option>
+                    @foreach($this->desarrollos as $id => $nombre)
+                        <option value="{{ $id }}">{{ $nombre }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <!-- ================================= -->
+            <!-- ======== FIN: FILTRO NUEVO ======== -->
+            <!-- ================================= -->
+
+
             <div style="overflow-x: auto;">
                 <table style="width: 100%; text-align: left; font-size: 0.875rem; color: #6b7280;">
                     
@@ -23,7 +45,7 @@
 
                     <tbody>
                         
-                        {{-- ========= FILA 1: TOTAL VENCIDO (NUEVA) ========= --}}
+                        {{-- ========= FILA 1: TOTAL VENCIDO (Ahora usa la prop. computada) ========= --}}
                         <tr style="background-color: #fef2f2; border-bottom: 2px solid #dc2626;">
                             <th scope="row" style="padding: 1rem 1.5rem; font-weight: 700; color: #991b1b; white-space: nowrap;">
                                 Saldo Vencido
@@ -65,7 +87,11 @@
                         @empty
                             <tr style="border-bottom: 1px solid #e5e7eb;">
                                 <td colspan="5" style="padding: 1rem 1.5rem; text-align: center; color: #6b7280;">
-                                    No hay datos de proyección futuros.
+                                    @if($this->selectedDesarrolloId)
+                                        No hay datos de proyección futuros para este proyecto.
+                                    @else
+                                        No hay datos de proyección futuros.
+                                    @endif
                                 </td>
                             </tr>
                         @endforelse
@@ -73,11 +99,10 @@
                 </table>
             </div>
 
-            {{-- ========= 3. ENLACES DE PAGINACIÓN (NUEVO) ========= --}}
+            {{-- ========= 3. ENLACES DE PAGINACIÓN ========= --}}
             <div style="padding-top: 1rem;">
                 {{ $this->proyeccionPaginada->links() }}
             </div>
         </div>
     </div>
-
 </x-filament-panels::page>

@@ -12,11 +12,7 @@ class Cliente extends Model
 {
     use HasFactory, SoftDeletes;
 
-    /**
-     * Los atributos que se pueden asignar masivamente.
-     *
-     * @var array<int, string>
-     */
+
     protected $fillable = [
         'nombre',
         'apellidos',
@@ -24,22 +20,20 @@ class Cliente extends Model
         'telefono',
         'correo',
         'user_id',
+        'ocupacion',
+        'fecha_de_nacimiento',
+    ];
+    protected $casts = [
+        'fecha_de_nacimiento' => 'date', 
     ];
 
-    /**
-     * Define la relación de muchos a muchos con Venta.
-     * Un cliente puede estar asociado a una o varias ventas.
-     */
     public function ventas(): BelongsToMany
     {
-        // El segundo argumento es el nombre de la tabla pivote.
+
         return $this->belongsToMany(Venta::class, 'cliente_venta');
     }
 
-    /**
-     * Define la relación inversa de uno a muchos con User.
-     * Un cliente puede estar asociado a un usuario del sistema.
-     */
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

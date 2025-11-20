@@ -22,7 +22,7 @@
         th, td {
             padding: 6px;
         }
-        
+
         .w-100 { width: 100%; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
@@ -35,7 +35,7 @@
 
         .header-table td {
             border: none;
-            padding: 0 5px; 
+            padding: 0 5px;
             vertical-align: top;
         }
         .logo-cell {
@@ -43,7 +43,7 @@
             text-align: left;
         }
         .logo-cell img {
-            max-width: 100%; 
+            max-width: 100%;
             height: auto;
             max-height: 160px;
         }
@@ -121,29 +121,9 @@
             text-align: center;
         }
         .status-pagado { background-color: #d4edda; color: #155724; }
-        .status-pendiente { background-color: #fff3cd; color: #856404; }
-        .status-parcial { background-color: #d1ecf1; color: #0c5460; }
+        .status-por-pagar { background-color: #fff3cd; color: #856404; }
+        .status-pendiente { background-color: #f8d7da; color: #721c24; }
         
-        .abonos-detail {
-            background-color: #f9f9f9;
-        }
-        .abonos-detail td {
-            padding: 10px 15px;
-        }
-        .abonos-detail ul {
-            margin: 0;
-            padding-left: 15px;
-            list-style-type: square;
-        }
-        .abonos-detail li {
-            font-size: 10px;
-            color: #444;
-            margin-bottom: 3px;
-        }
-        .abonos-detail strong {
-            color: #000;
-        }
-
         .footer {
             position: fixed;
             bottom: -20px;
@@ -181,15 +161,7 @@
                 </td>
                 
                 <td class="logo-cell">
-                    @php
-                        $logoPath2 = public_path('images/hidalma.png'); 
-                    @endphp
-
-                    @if(file_exists($logoPath2))
-                        <img src="{{ $logoPath2 }}" alt="Logo 2">
-                    @else
-                        <p style="color: #ccc; font-size: 9px;">[Logo 2 no encontrado]</p>
-                    @endif
+                
                 </td>
 
                 <td class="company-info text-right">
@@ -256,18 +228,61 @@
                         @endif
                     </td>
 
-                    <td class="align-top">
+                    <td class="align-top" style="padding-right: 15px;">
                         @php
-                            $totalPagado = $venta->planPagos->flatMap->abonos->sum('monto');
+                            $todosAbonos = $venta->planPagos->flatMap->abonos;
+                            $totalPagado = $todosAbonos->sum('monto');
                             $saldoPendiente = $venta->monto_total_venta - $totalPagado;
+                            
+                            $pagosPorTipo = $todosAbonos->groupBy(function($abono) {
+                                return $abono->pago->metodo_pago ?? 'Otro';
+                            })->map(function ($group) {
+                                return $group->sum('monto');
+                            });
                         @endphp
-                        <p><strong>Monto Total Venta:</strong> <span class="text-right text-bold">${{ number_format($venta->monto_total_venta, 2) }}</span></p>
-                        <p><strong>Enganche:</strong> <span class="text-right">${{ number_format($venta->enganche, 2) }}</span></p>
-                        <p><strong>Total Pagado:</strong> <span class="text-right" style="color: #155724;">${{ number_format($totalPagado, 2) }}</span></p>
-                        <p><strong>Saldo Pendiente:</strong> <span class="text-right text-bold" style="color: #c00;">${{ number_format($saldoPendiente, 2) }}</span></p>
-                        <hr style="border: 0; border-top: 1px solid #eee;">
-                        <p><strong>No. Pagos:</strong> {{ $venta->n_pagos }}</p>
-                        <p><strong>Frecuencia:</strong> {{ mb_convert_encoding($venta->frecuencia_pagos, 'HTML-ENTITIES', 'UTF-8') }}</p>
+
+                        <table class="w-100" style="font-size: 10px;">
+                            <tr>
+                                <td style="padding: 2px 0;"><strong style="min-width: 0;">Monto Total Venta:</strong></td>
+                                <td class="text-right" style="padding: 2px 0; font-weight: bold;">${{ number_format($venta->monto_total_venta, 2) }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 2px 0;"><strong style="min-width: 0;">Total Pagado:</strong></td>
+                                <td class="text-right" style="padding: 2px 0; color: #155724;">${{ number_format($totalPagado, 2) }}</td>
+                            </tr>
+
+                            @if($pagosPorTipo->count() > 0 && $totalPagado > 0)
+                                <tr>
+                                    <td colspan="2" style="padding: 0; padding-left: 15px;">
+                                        <table class="w-100" style="font-size: 9px; border-left: 2px solid #eee;">
+                                            @foreach($pagosPorTipo as $tipo => $montoTipo)
+                                                <tr>
+                                                    <td class="text-right" style="padding: 1px 0 1px 5px;"><strong>{{ mb_convert_encoding(ucfirst(str_replace('_', ' ', $tipo)), 'HTML-ENTITIES', 'UTF-8') }}:</strong></td>
+                                                    <td class="text-right" style="padding: 1px 0;">${{ number_format($montoTipo, 2) }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </table>
+                                    </td>
+                                </tr>
+                            @endif
+
+                            <tr>
+                                <td style="padding: 2px 0;"><strong style="min-width: 0;">Saldo Pendiente:</strong></td>
+                                <td class="text-right" style="padding: 2px 0; font-weight: bold; color: #c00;">${{ number_format($saldoPendiente, 2) }}</td>
+                            </tr>
+                            
+                            <tr>
+                                <td colspan="2" style="padding-top: 5px; border-top: 1px solid #eee;"></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 2px 0;"><strong style="min-width: 0;">No. Pagos:</strong></td>
+                                <td class="text-right" style="padding: 2px 0;">{{ $venta->n_pagos }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 2px 0;"><strong style="min-width: 0;">Frecuencia:</strong></td>
+                                <td class="text-right" style="padding: 2px 0;">{{ mb_convert_encoding($venta->frecuencia_pagos, 'HTML-ENTITIES', 'UTF-8') }}</td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
             </tbody>
@@ -285,6 +300,10 @@
                 </tr>
             </thead>
             <tbody>
+                @php
+                    $totalMontoCuotas = $venta->planPagos->sum('monto');
+                    $totalSaldoCuotas = $venta->planPagos->reject(fn($cuota) => $cuota->status === 'pagado')->sum('saldo');
+                @endphp
                 @forelse($venta->planPagos->sortBy('numero_pago') as $cuota)
                     <tr>
                         <td class="text-center text-bold">{{ $cuota->numero_pago }}</td>
@@ -292,14 +311,29 @@
                         <td class="text-right">${{ number_format($cuota->monto, 2) }}</td>
                         <td class="text-center">
                             @php
-                                $statusTexto = match ($cuota->status) {
-                                    'pagado' => 'Pagado',
-                                    'parcial' => 'Parcial',
-                                    'pendiente' => 'Pendiente',
-                                    default => ucfirst($cuota->status),
-                                };
+                                $statusTexto = '';
+                                $statusClass = '';
+
+                                if ($cuota->status === 'pagado') {
+                                    $statusTexto = 'Pagado';
+                                    $statusClass = 'pagado';
+                                } elseif ($cuota->status === 'parcial') {
+                                    $statusTexto = 'Pendiente';
+                                    $statusClass = 'pendiente';
+                                } elseif ($cuota->status === 'pendiente') {
+                                    if ($cuota->fecha_vencimiento->isFuture()) {
+                                        $statusTexto = 'Por Pagar';
+                                        $statusClass = 'por-pagar';
+                                    } else {
+                                        $statusTexto = 'Pendiente';
+                                        $statusClass = 'pendiente';
+                                    }
+                                } else {
+                                    $statusTexto = ucfirst($cuota->status);
+                                    $statusClass = $cuota->status;
+                                }
                             @endphp
-                            <span class="status status-{{ $cuota->status }}">
+                            <span class="status status-{{ $statusClass }}">
                                 {{ mb_convert_encoding($statusTexto, 'HTML-ENTITIES', 'UTF-8') }}
                             </span>
                         </td>
@@ -311,30 +345,22 @@
                             @endif
                         </td>
                     </tr>
-                    
-                    @if($cuota->abonos->count() > 0)
-                        <tr class="abonos-detail">
-                            <td colspan="5">
-                                <strong>Abonos recibidos en esta cuota:</strong>
-                                <ul>
-                                    @foreach($cuota->abonos as $abono)
-                                        <li>
-                                            Fecha: {{ $abono->fecha_abono->format('d/m/Y') }} | 
-                                            Monto: <strong>${{ number_format($abono->monto, 2) }}</strong> |
-                                            Registró: {{ mb_convert_encoding($abono->user->name ?? 'N/A', 'HTML-ENTITIES', 'UTF-8') }}
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </td>
-                        </tr>
-                    @endif
-                    
                 @empty
                     <tr>
                         <td colspan="5" class="text-center">No hay un plan de pagos definido.</td>
                     </tr>
                 @endforelse
+
+                @if($venta->planPagos->count() > 0)
+                <tr>
+                    <td colspan="2" class="text-left" style="border-top: 2px solid #333; font-weight: bold; background-color: #f0f0f0; padding: 8px;">Totales:</td>
+                    <td class="text-right" style="border-top: 2px solid #333; font-weight: bold; background-color: #f0f0f0; padding: 6px;">${{ number_format($totalMontoCuotas, 2) }}</td>
+                    <td style="border-top: 2px solid #333; font-weight: bold; background-color: #f0f0f0; padding: 8px;"></td>
+                    <td class="text-right" style="border-top: 2px solid #333; font-weight: bold; background-color: #f0f0f0; padding: 6px;">${{ number_format($totalSaldoCuotas, 2) }}</td>
+                </tr>
+                @endif
             </tbody>
+            
         </table>
 
     </div>

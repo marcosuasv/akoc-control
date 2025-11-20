@@ -61,6 +61,7 @@ class VendedorPanelProvider extends PanelProvider
                ->plugins([
                 FilamentAwinTheme::make()
                     ->primaryColor('#c0a062')
+                    
             ])
             ->middleware([
                 EncryptCookies::class,

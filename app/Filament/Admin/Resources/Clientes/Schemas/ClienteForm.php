@@ -2,10 +2,11 @@
 
 namespace App\Filament\Admin\Resources\Clientes\Schemas;
 
-use App\Models\User; 
+use App\Models\User;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DatePicker;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Hash;
 
@@ -15,7 +16,6 @@ class ClienteForm
     {
         return $schema
             ->components([
-                // GRUPO 1: DATOS DEL CLIENTE
                 Section::make('Información del Cliente')
                     ->description('Datos personales y de contacto del cliente.')
                     ->schema([
@@ -23,6 +23,15 @@ class ClienteForm
                             ->required(),
                         TextInput::make('apellidos')
                             ->required(),
+
+                        TextInput::make('ocupacion')
+                            ->label('Ocupación')
+                            ->placeholder('Ej. Doctor, Abogado, etc.'),
+
+                        DatePicker::make('fecha_de_nacimiento')
+                            ->label('Fecha de Nacimiento')
+                            ->native(false),
+
                         TextInput::make('telefono')
                             ->tel()
                             ->required()
@@ -31,18 +40,17 @@ class ClienteForm
                             ->email()
                             ->required()
                             ->label('Correo de Contacto')
-                            ->unique(table: 'clientes', ignoreRecord: true) // Evita correos duplicados en clientes
+                            ->unique(table: 'clientes', ignoreRecord: true)
                             ->helperText('Este es el correo principal de contacto (puede ser diferente al de inicio de sesión).'),
                         TextInput::make('direccion')
                             ->required()
-                            ->columnSpanFull(), // Ocupa todo el ancho
+                            ->columnSpanFull(),
                     ])
-                    ->columns(2), // Organiza este grupo en 2 columnas
+                    ->columns(2),
 
-                // GRUPO 2: ACCESO AL SISTEMA (PANEL DE CLIENTE)
                 Section::make('Acceso al Sistema')
                     ->description('Asigna una cuenta de usuario para que este cliente pueda iniciar sesión en su panel.')
-                    ->collapsible() // Se puede colapsar si no se necesita
+                    ->collapsible()
                     ->schema([
                         Select::make('user_id')
                             ->label('Usuario del Sistema')
@@ -51,19 +59,12 @@ class ClienteForm
                             ->preload()
                             ->placeholder('Sin acceso al sistema (solo registro de contacto)')
                             ->helperText('Selecciona un usuario existente o crea uno nuevo para el cliente.')
-                            
-                            // 3. Usa un método helper para definir el formulario (más limpio)
                             ->createOptionForm(static::getUserForm())
-                            
-                            // 4. Usa un método helper para la lógica de creación
                             ->createOptionUsing(static::createUser()),
                     ]),
             ]);
     }
 
-    /**
-     * Define el formulario para crear un nuevo Usuario.
-     */
     public static function getUserForm(): array
     {
         return [
@@ -87,11 +88,7 @@ class ClienteForm
         ];
     }
 
-    /**
-     * Define la lógica personalizada para crear el Usuario.
-     * Esto nos permite asignarle el rol de 'cliente' automáticamente.
-     */
-   public static function createUser(): \Closure
+    public static function createUser(): \Closure
     {
         return function (array $data): int {
             $user = User::create($data);

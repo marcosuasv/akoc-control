@@ -8,9 +8,6 @@ use Illuminate\Http\Request;
 
 class EstadoDeCuentaController extends Controller
 {
-    /**
-     * Muestra el PDF del estado de cuenta de una venta.
-     */
     public function show(Venta $venta)
     {
         $venta->load([

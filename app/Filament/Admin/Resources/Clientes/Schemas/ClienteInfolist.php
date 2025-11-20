@@ -13,61 +13,66 @@ class ClienteInfolist
     {
         return $schema
             ->components([
-                // GRUPO 1: INFORMACIÓN PRINCIPAL
                 Section::make('Información del Cliente')
                     ->schema([
-                        // Usamos un Grid para poner nombre y apellidos juntos
                         Grid::make(2)
                             ->schema([
                                 TextEntry::make('nombre'),
                                 TextEntry::make('apellidos'),
+                                
+                                TextEntry::make('ocupacion')
+                                    ->label('Ocupación')
+                                    ->placeholder('No registrada'),
+                                    
+                                TextEntry::make('fecha_de_nacimiento')
+                                    ->label('Fecha de Nacimiento')
+                                    ->date()
+                                    ->placeholder('No registrada'),
                             ]),
                     ]),
 
-                // GRUPO 2: DATOS DE CONTACTO
                 Section::make('Información de Contacto')
-                    ->columns(2) // Organizamos esta sección en 2 columnas
+                    ->columns(2)
                     ->schema([
                         TextEntry::make('telefono')
                             ->label('Teléfono')
-                            ->icon('heroicon-s-phone') // <-- Icono
-                            ->copyable() // <-- Acción: Copiar al portapapeles
+                            ->icon('heroicon-s-phone')
+                            ->copyable()
                             ->placeholder('No registrado'),
                         
                         TextEntry::make('correo')
                             ->label('Correo de Contacto')
-                            ->icon('heroicon-s-envelope') // <-- Icono
-                            ->copyable() // <-- Acción: Copiar
-                            ->url(fn (string $state): string => "mailto:{$state}") // <-- Acción: Abrir email
+                            ->icon('heroicon-s-envelope')
+                            ->copyable()
+                            ->url(fn (string $state): string => "mailto:{$state}")
                             ->placeholder('No registrado'),
                         
                         TextEntry::make('direccion')
                             ->label('Dirección')
-                            ->icon('heroicon-s-map-pin') // <-- Icono
-                            ->columnSpanFull() // <-- Ocupa todo el ancho
+                            ->icon('heroicon-s-map-pin')
+                            ->columnSpanFull()
                             ->placeholder('No registrada'),
                     ]),
                 
-                // GRUPO 3: INFORMACIÓN DEL SISTEMA (METADATOS)
                 Section::make('Datos del Sistema')
-                    ->columns(3) // 3 columnas para esta información
+                    ->columns(3)
                     ->schema([
                         TextEntry::make('user.name')
                             ->label('Usuario de Acceso')
-                            ->icon('heroicon-s-user') // <-- Icono
-                            ->badge() // <-- Se ve mejor como una "etiqueta"
+                            ->icon('heroicon-s-user')
+                            ->badge()
                             ->placeholder('Sin acceso al sistema'),
                         
                         TextEntry::make('created_at')
                             ->label('Fecha de Creación')
                             ->dateTime()
-                            ->icon('heroicon-s-calendar-days') // <-- Icono
+                            ->icon('heroicon-s-calendar-days')
                             ->placeholder('-'),
                         
                         TextEntry::make('updated_at')
                             ->label('Última Actualización')
                             ->dateTime()
-                            ->icon('heroicon-s-clock') // <-- Icono
+                            ->icon('heroicon-s-clock')
                             ->placeholder('-'),
                     ]),
             ]);

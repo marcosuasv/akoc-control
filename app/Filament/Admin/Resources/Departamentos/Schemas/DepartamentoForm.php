@@ -39,7 +39,8 @@ class DepartamentoForm
                     ->columns(3)
                     ->schema([
                         TextInput::make('numero')
-                            ->required(),
+                            ->required()
+                             ->unique(table: 'departamentos', ignoreRecord: true),
                         TextInput::make('piso')
                             ->required(),
                         TextInput::make('modelo')

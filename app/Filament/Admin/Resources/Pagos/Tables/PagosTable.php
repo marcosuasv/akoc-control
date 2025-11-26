@@ -2,7 +2,6 @@
 
 namespace App\Filament\Admin\Resources\Pagos\Tables;
 
-
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -28,7 +27,6 @@ class PagosTable
     public static function configure(Table $table): Table
     {
         return $table
-        
             ->modifyQueryUsing(function ($query) {
                 $query->leftJoin('clientes', 'pagos.cliente_id', '=', 'clientes.id')
                     ->select('pagos.*');
@@ -36,12 +34,15 @@ class PagosTable
             ->groups(['cliente_id'])
             ->defaultGroup('cliente_id')
             ->columns([
-                TextColumn::make('cliente.nombre_completo')
+                TextColumn::make('cliente_display')
                     ->label('Cliente')
-                    ->sortable(query: fn($query, $direction) => $query->orderBy('clientes.nombre', $direction))
-                    // Búsqueda personalizada para el cliente que usa la tabla 'clientes' ya unida
+                    ->sortable(query: fn($query, $direction) => $query->orderBy('clientes.razon_social', $direction)->orderBy('clientes.nombre', $direction))
+                    ->getStateUsing(fn($record) => $record->cliente->razon_social ?? "{$record->cliente->nombre} {$record->cliente->apellidos}")
                     ->searchable(query: function (Builder $query, string $search): Builder {
-                        $query->where(DB::raw("CONCAT(clientes.nombre, ' ', clientes.apellidos)"), 'like', "%{$search}%");
+                        $query->where(function ($q) use ($search) {
+                            $q->where('clientes.razon_social', 'like', "%{$search}%")
+                              ->orWhere(DB::raw("CONCAT(clientes.nombre, ' ', clientes.apellidos)"), 'like', "%{$search}%");
+                        });
                         return $query;
                     }),
                 TextColumn::make('cantidad_general')
@@ -102,16 +103,18 @@ class PagosTable
             ])
             ->filters([
                 Filter::make('cliente_nombre')
-                    ->label('Nombre del Cliente')
+                    ->label('Cliente / Razón Social')
                     ->form([
-                        TextInput::make('nombre')->label('Buscar por nombre o apellidos')
+                        TextInput::make('nombre')->label('Buscar por Razón Social o Nombre')
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query->when(
                             $data['nombre'],
-                            fn(Builder $query, $nombre) => $query
-                                ->where('clientes.nombre', 'like', "%{$nombre}%")
-                                ->orWhere('clientes.apellidos', 'like', "%{$nombre}%")
+                            fn(Builder $query, $nombre) => $query->where(function ($q) use ($nombre) {
+                                $q->where('clientes.razon_social', 'like', "%{$nombre}%")
+                                  ->orWhere('clientes.nombre', 'like', "%{$nombre}%")
+                                  ->orWhere('clientes.apellidos', 'like', "%{$nombre}%");
+                            })
                         );
                     }),
                 Filter::make('fecha')

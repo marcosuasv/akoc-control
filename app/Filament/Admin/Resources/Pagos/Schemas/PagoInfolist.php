@@ -96,18 +96,43 @@ class PagoInfolist
                             ->icon('heroicon-s-user')
                             ->relationship('cliente')
                             ->schema([
-                                TextEntry::make('nombre_completo')
-                                    ->label('Nombre Cliente')
+                                TextEntry::make('razon_social')
+                                    ->label('Razón Social')
+                                    ->weight('bold')
+                                    ->icon('heroicon-s-building-office')
+                                    ->placeholder('Sin Razón Social'),
+
+                                TextEntry::make('rfc')
+                                    ->label('RFC')
+                                    ->fontFamily('mono')
+                                    ->icon('heroicon-s-identification'),
+
+                                TextEntry::make('tipo_persona')
+                                    ->label('Tipo')
+                                    ->badge()
+                                    ->formatStateUsing(fn (string $state): string => $state === 'moral' ? 'Moral' : 'Física')
+                                    ->color(fn (string $state): string => $state === 'moral' ? 'info' : 'success'),
+
+                                TextEntry::make('contacto')
+                                    ->label('Persona de Contacto')
+                                    ->getStateUsing(fn($record) => "{$record->nombre} {$record->apellidos}")
                                     ->icon('heroicon-s-user'),
+
                                 TextEntry::make('correo')
                                     ->label('Correo')
                                     ->icon('heroicon-s-envelope')
                                     ->copyable()
                                     ->placeholder('N/A'),
+
                                 TextEntry::make('telefono')
                                     ->label('Teléfono')
                                     ->icon('heroicon-s-phone')
                                     ->copyable()
+                                    ->placeholder('N/A'),
+                                    
+                                TextEntry::make('direccion')
+                                    ->label('Dirección')
+                                    ->icon('heroicon-s-map-pin')
                                     ->placeholder('N/A'),
                             ]),
                         Section::make('Historial')
@@ -154,73 +179,74 @@ class PagoInfolist
                             ->label('Listado de Abonos Realizados con este Pago')
                             ->columnSpanFull()
                             ->schema([
-                                TextEntry::make('id')
-                                    ->label('ID Abono')
-                                    ->url(function (Model $record): string {
-                                        $user = Auth::user();
-                                        if ($user->hasRole('super_admin')) {
-                                            return "http://10.2.0.170:8090/admin/abonos/{$record->id}";
-                                        }
-                                        if ($user->hasRole('vendedor')) {
-                                            return "http://10.2.0.170:8090/vendedor/abonos/{$record->id}";
-                                        }
-                                        return '#';
-                                    })
-                                    ->openUrlInNewTab()
-                                    ->icon('heroicon-s-identification')
-                                    ->color('info')
-                                    ->weight('bold'),
+                                Grid::make(4)
+                                    ->schema([
+                                        TextEntry::make('id')
+                                            ->label('ID Abono')
+                                            ->url(function (Model $record): string {
+                                                $user = Auth::user();
+                                                if ($user->hasRole('super_admin')) {
+                                                    return "http://10.2.0.170:8090/admin/abonos/{$record->id}";
+                                                }
+                                                if ($user->hasRole('vendedor')) {
+                                                    return "http://10.2.0.170:8090/vendedor/abonos/{$record->id}";
+                                                }
+                                                return '#';
+                                            })
+                                            ->openUrlInNewTab()
+                                            ->icon('heroicon-s-identification')
+                                            ->color('info')
+                                            ->weight('bold'),
 
-                                TextEntry::make('fecha_abono')
-                                    ->label('Fecha del Abono')
-                                    ->date('d/m/Y')
-                                    ->icon('heroicon-s-calendar'),
+                                        TextEntry::make('fecha_abono')
+                                            ->label('Fecha del Abono')
+                                            ->date('d/m/Y')
+                                            ->icon('heroicon-s-calendar'),
 
-                                TextEntry::make('monto')
-                                    ->label('Monto Abonado')
-                                    ->money('MXN')
-                                    ->weight('bold')
-                                    ->color('success'),
-                                
-                                TextEntry::make('planPago.id')
-                                    ->label('Aplicado a')
-                                    ->icon('heroicon-s-document-check')
-                                    ->placeholder('N/A')
-                                    ->formatStateUsing(function (Model $record): string {
-                                        if ($plan = $record->planPago) {
-                                            return "Cuota #{$plan->numero_pago} (Venta ID: {$plan->venta_id})";
-                                        }
-                                        return 'N/A';
-                                    })
-                                    ->url(function (Model $record): string {
-                                        $user = Auth::user();
-                                        $ventaId = $record->planPago?->venta_id;
-                                        if (!$ventaId) return '#';
+                                        TextEntry::make('monto')
+                                            ->label('Monto Abonado')
+                                            ->money('MXN')
+                                            ->weight('bold')
+                                            ->color('success'),
+                                        
+                                        TextEntry::make('planPago.id')
+                                            ->label('Aplicado a')
+                                            ->icon('heroicon-s-document-check')
+                                            ->placeholder('N/A')
+                                            ->formatStateUsing(function (Model $record): string {
+                                                if ($plan = $record->planPago) {
+                                                    return "Cuota #{$plan->numero_pago} (Venta ID: {$plan->venta_id})";
+                                                }
+                                                return 'N/A';
+                                            })
+                                            ->url(function (Model $record): string {
+                                                $user = Auth::user();
+                                                $ventaId = $record->planPago?->venta_id;
+                                                if (!$ventaId) return '#';
 
-                                        if ($user->hasRole('super_admin')) {
-                                            return "http://10.2.0.170:8090/admin/ventas/{$ventaId}";
-                                        }
-                                        if ($user->hasRole('vendedor')) {
-                                            return "http://10.2.0.170:8090/vendedor/ventas/{$ventaId}";
-                                        }
-                                        return '#';
-                                    })
-                                    ->openUrlInNewTab()
-                                    ->color('primary'),
+                                                if ($user->hasRole('super_admin')) {
+                                                    return "http://10.2.0.170:8090/admin/ventas/{$ventaId}";
+                                                }
+                                                if ($user->hasRole('vendedor')) {
+                                                    return "http://10.2.0.170:8090/vendedor/ventas/{$ventaId}";
+                                                }
+                                                return '#';
+                                            })
+                                            ->openUrlInNewTab()
+                                            ->color('primary'),
 
-                                TextEntry::make('user.name')
-                                    ->label('Registrado Por')
-                                    ->icon('heroicon-s-pencil-square')
-                                    ->placeholder('Sistema'),
+                                        TextEntry::make('user.name')
+                                            ->label('Registrado Por')
+                                            ->icon('heroicon-s-pencil-square')
+                                            ->placeholder('Sistema'),
 
-                                TextEntry::make('comentarios')
-                                    ->label('Comentarios del Abono')
-                                    ->placeholder('Sin comentarios.')
-                                    ->columnSpanFull(),
-                            ])
-                            ->grid(3)
-                            ->contained(true)
-                            ->extraAttributes(['class' => 'space-y-4']),
+                                        TextEntry::make('comentarios')
+                                            ->label('Comentarios del Abono')
+                                            ->placeholder('Sin comentarios.')
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->extraAttributes(['class' => 'space-y-4']),
+                            ]),
                     ]),
             ]);
     }

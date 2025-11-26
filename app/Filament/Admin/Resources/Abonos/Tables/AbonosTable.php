@@ -37,12 +37,14 @@ class AbonosTable
                     ->date('d/m/Y')
                     ->sortable(),
 
-                TextColumn::make('pago.cliente.nombre_completo')
+                TextColumn::make('pago.cliente.razon_social')
                     ->label('Cliente')
                     ->sortable()
+                    ->getStateUsing(fn(Abono $record) => $record->pago->cliente->razon_social ?? "{$record->pago->cliente->nombre} {$record->pago->cliente->apellidos}")
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->whereHas('pago.cliente', function (Builder $q) use ($search) {
-                            $q->where(DB::raw("CONCAT(nombre, ' ', apellidos)"), 'like', "%{$search}%");
+                            $q->where('razon_social', 'like', "%{$search}%")
+                              ->orWhere(DB::raw("CONCAT(nombre, ' ', apellidos)"), 'like', "%{$search}%");
                         });
                     }),
 

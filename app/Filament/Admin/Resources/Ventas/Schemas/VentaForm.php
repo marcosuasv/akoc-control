@@ -21,11 +21,8 @@ use Filament\Notifications\Notification;
 use App\Models\Cliente;
 use Filament\Forms\Components\Repeater\TableColumn;
 
-
-
 class VentaForm
 {
-
     public static function configure(Schema $schema): Schema
     {
         return $schema->components([
@@ -58,11 +55,22 @@ class VentaForm
                                 if ($desarrolloId) {
                                     $query->where('desarrollo_id', $desarrolloId);
                                 }
-                                $query->where('estatus', 'disponible');
+
+                                $query->where(function ($q) use ($livewire) {
+                                    $q->where('estatus', 'disponible');
+                                    if ($livewire->record && $livewire->record->departamento_id) {
+                                        $q->orWhere('id', $livewire->record->departamento_id);
+                                    }
+                                });
 
                                 return $query;
                             }
                         )
+                        ->getOptionLabelUsing(function ($value) {
+                            $record = \App\Models\Departamento::find($value);
+                            // Aseguramos retornar string vacío en lugar de null si no encuentra el registro
+                            return $record ? "N° {$record->numero} - {$record->modelo} (Piso {$record->piso})" : "";
+                        })
                         ->getOptionLabelFromRecordUsing(fn(Model $record) => "N° {$record->numero} - {$record->modelo} (Piso {$record->piso})")
                         ->searchable(['numero', 'modelo', 'piso'])
                         ->preload()->required()->live()
@@ -99,9 +107,14 @@ class VentaForm
                         ->label('Cliente(s)')
                         ->relationship('clientes')
                         ->multiple()
-                        ->getOptionLabelFromRecordUsing(fn(Model $record) => "{$record->nombre} {$record->apellidos}")
-                        ->searchable(['nombre', 'apellidos'])->preload()->required()
+                        // SOLUCIÓN: Usamos '??' para evitar devolver null si razon_social está vacío
+                        ->getOptionLabelFromRecordUsing(fn(Model $record) => $record->razon_social ?? "{$record->nombre} {$record->apellidos}")
+                        ->searchable(['razon_social', 'nombre', 'apellidos']) // Agregué nombre/apellidos por si razon_social es nulo
+                        ->preload()
+                        ->required()
                         ->createOptionForm([
+                            TextInput::make('rfc')->label('RFC')->maxLength(13)->required(),
+                            TextInput::make('razon_social')->label('Razón Social')->required()->maxLength(255),
                             TextInput::make('nombre')->label('Nombre')->required(),
                             TextInput::make('apellidos')->label('Apellidos')->required(),
                             TextInput::make('direccion')->label('Dirección')->required(),
@@ -258,32 +271,32 @@ class VentaForm
                         ->relationship()
                         ->table([
                             TableColumn::make('# Pago')
-                              ->width('100px'), 
+                                ->width('100px'),
                             TableColumn::make('Fecha Vencimiento')
-                               ->width('80px'), 
+                                ->width('80px'),
                             TableColumn::make('Monto')
-                            ->width('100px'), 
+                                ->width('100px'),
                             TableColumn::make('Estatus')
-                              ->width('100px'), 
+                                ->width('100px'),
                         ])
                         ->schema([
                             TextInput::make('numero_pago')
                                 ->readOnly()
                                 ->label('# Pago')
                                 ->default(fn(Get $get) => count($get('../../planPagos')) + 1)
-                                ->hiddenLabel() 
+                                ->hiddenLabel()
                                 ->required(),
 
                             DatePicker::make('fecha_vencimiento')
                                 ->label('Vencimiento')
-                                ->hiddenLabel() 
+                                ->hiddenLabel()
                                 ->required(),
 
                             TextInput::make('monto')
                                 ->numeric()
                                 ->prefix('$')
                                 ->label('Monto')
-                                ->hiddenLabel() 
+                                ->hiddenLabel()
                                 ->required(),
 
                             Select::make('status')
@@ -293,9 +306,9 @@ class VentaForm
                                 ->hiddenLabel()
                                 ->required(),
                         ])
-                         ->grid(2)
+                        ->grid(2)
                         ->defaultItems(0)
-                        ->reorderable(false) 
+                        ->reorderable(false)
                         ->deletable()
                         ->addable()
                         ->columnSpanFull()

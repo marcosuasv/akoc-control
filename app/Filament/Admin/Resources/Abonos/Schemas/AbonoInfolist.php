@@ -9,12 +9,13 @@ use Filament\Schemas\Components\Grid;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Pago;
 use Filament\Infolists\Components\IconEntry;
-use App\Filament\Admin\Resources\Pagos\PagoResource; // Asumido
-use App\Filament\Admin\Resources\Ventas\VentaResource; // Asumido
-use App\Filament\Admin\Resources\Departamentos\DepartamentoResource; // Asumido
+use App\Filament\Admin\Resources\Pagos\PagoResource; 
+use App\Filament\Admin\Resources\Ventas\VentaResource; 
+use App\Filament\Admin\Resources\Departamentos\DepartamentoResource; 
 use Filament\Actions\Action;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Venta;
+
 class AbonoInfolist
 {
     public static function configure(Schema $schema): Schema
@@ -84,10 +85,12 @@ class AbonoInfolist
                             ->openUrlInNewTab()
                             ->color('info'),
 
-                        TextEntry::make('cliente.nombre_completo')
-                            ->label('Cliente del Pago')
+                        // MODIFICACIÓN: Lógica de cliente actualizada
+                        TextEntry::make('cliente_display')
+                            ->label('Cliente / Razón Social')
                             ->icon('heroicon-s-user')
-                            ->columnSpan(2),
+                            ->columnSpan(2)
+                            ->getStateUsing(fn (Model $record) => $record->cliente->razon_social ?? "{$record->cliente->nombre} {$record->cliente->apellidos}"),
 
                         TextEntry::make('fecha')
                             ->label('Fecha de Emisión del Pago')
@@ -115,7 +118,7 @@ class AbonoInfolist
 
                 Section::make('Cuota y Venta Aplicada (Destino del Dinero)')
                     ->icon('heroicon-s-document-check')
-                    ->relationship('planPago') // La relación correcta
+                    ->relationship('planPago') 
                     ->columns(3)
                     ->schema([
                         TextEntry::make('numero_pago')
@@ -128,7 +131,7 @@ class AbonoInfolist
                             ->money('MXN')
                             ->columnSpan(1),
 
-                        TextEntry::make('saldo') // Usa el Accessor del modelo PlanPago
+                        TextEntry::make('saldo') 
                             ->label('Saldo Restante de la Cuota')
                             ->money('MXN')
                             ->color('warning')
@@ -151,7 +154,6 @@ class AbonoInfolist
                                 }
                                 if ($user->hasRole('vendedor')) {
                                     return "http://10.2.0.170:8090/vendedor/ventas/{$ventaId}";
-
                                 }
                                 return '#';
                             })
@@ -170,10 +172,10 @@ class AbonoInfolist
                                     return '#';
                                 }
                                 if ($user->hasRole('super_admin')) {
-                                    return "http://10.2.0.170:8090/admin/departamentos/{ $departamentoId}";
+                                    return "http://10.2.0.170:8090/admin/departamentos/{$departamentoId}";
                                 }
                                 if ($user->hasRole('vendedor')) {
-                                    return "http://10.2.0.170:8090/vendedor/departamentos/{ $departamentoId}";
+                                    return "http://10.2.0.170:8090/vendedor/departamentos/{$departamentoId}";
                                 }
                                 return '#';
                             })

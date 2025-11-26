@@ -28,13 +28,14 @@ class PagoForm
                     ->columnSpanFull()
                     ->components([
                         Select::make('cliente_id')
-                            ->relationship('cliente') 
+                            ->relationship('cliente')
                             ->label('Cliente')
-                            ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->nombre} {$record->apellidos}")
-                            ->searchable(['nombre', 'apellidos'])
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->razon_social ?? "{$record->nombre} {$record->apellidos}")
+                            ->searchable(['razon_social', 'nombre', 'apellidos'])
                             ->preload()
                             ->required()
                             ->reactive()
+                            ->disabledOn('edit')
                             ->columnSpanFull(),
 
                         TextInput::make('cantidad_general')
@@ -45,7 +46,7 @@ class PagoForm
                             ->reactive()
                             ->debounce('500ms')
                             ->columnSpan(1),
-                        
+
                         DatePicker::make('fecha')
                             ->label('Fecha del Depósito')
                             ->required()
@@ -94,13 +95,13 @@ class PagoForm
                             ->default(null)
                             ->columnSpan(1),
                     ]),
-                    
+
                 Section::make('Aplicar Monto a Venta(s)')
                     ->description('Distribuye el monto de este depósito en las cuotas pendientes del cliente.')
                     ->icon('heroicon-s-clipboard-document-list')
                     ->collapsible()
                     ->columnSpanFull()
-                    ->visible(fn (callable $get, string $operation): bool => 
+                    ->visible(fn (callable $get, string $operation): bool =>
                         $get('validacion') === true
                     )
                     ->schema([
@@ -115,13 +116,22 @@ class PagoForm
                             ->schema([
                                 Select::make('venta_id_filter')
                                     ->label('Venta del Cliente')
-                                    ->options(function (callable $get) { 
-                                        $clienteId = $get('../../cliente_id'); 
+                                    ->disabledOn('edit')
+                                    ->afterStateHydrated(function (Select $component, $record) {
+                                        if ($record && $record->plan_pago_id) {
+                                            $plan = PlanPago::find($record->plan_pago_id);
+                                            if ($plan) {
+                                                $component->state($plan->venta_id);
+                                            }
+                                        }
+                                    })
+                                    ->options(function (callable $get) {
+                                        $clienteId = $get('../../cliente_id');
                                         if (!$clienteId) return [];
                                         $ventas = Venta::whereHas('clientes', function (Builder $query) use ($clienteId) {
                                             $query->where('clientes.id', $clienteId);
                                         })
-                                        ->with(['departamento.desarrollo']) 
+                                        ->with(['departamento.desarrollo'])
                                         ->get();
                                         return $ventas->mapWithKeys(function ($venta) {
                                             $desarrolloNombre = $venta->departamento?->desarrollo?->nombre ?? 'N/D';
@@ -137,17 +147,12 @@ class PagoForm
 
                                 Select::make('plan_pago_id')
                                     ->label('Cuota Pendiente (Plan de Pago)')
+                                    ->disabledOn('edit')
                                     ->options(function (callable $get) {
                                         $ventaId = $get('venta_id_filter');
                                         if (!$ventaId) return [0 => 'Seleccione una venta primero'];
 
-                                        $planes = PlanPago::where('venta_id', $ventaId)
-                                            ->get()
-                                            ->filter(fn (PlanPago $plan) => $plan->saldo > 0);
-                                        
-                                        if ($planes->isEmpty()) {
-                                            return [0 => 'No hay cuotas pendientes para esta venta'];
-                                        }
+                                        $planes = PlanPago::where('venta_id', $ventaId)->get();
 
                                         return $planes->mapWithKeys(fn (PlanPago $plan) => [
                                             $plan->id => "Cuota #{$plan->numero_pago} (Vence: {$plan->fecha_vencimiento}) - Saldo: \${$plan->saldo}"
@@ -161,7 +166,7 @@ class PagoForm
                                     ->afterStateUpdated(function (Set $set, $state) {
                                         $plan = PlanPago::find($state);
                                         if ($plan) {
-                                            $set('monto', $plan->saldo); 
+                                            $set('monto', $plan->saldo);
                                         }
                                     }),
 
@@ -187,15 +192,15 @@ class PagoForm
                                     ->rows(4)
                                     ->nullable()
                                     ->columnSpanFull(),
-                                    
+
                                 Hidden::make('user_id')
                                     ->default(auth()->id())
                                     ->required(),
                             ])
                             ->rules([
                                 fn (callable $get): \Closure => function ($attribute, $value, $fail) use ($get) {
-                                    if (!(bool) $get('validacion')) return; 
-                                    
+                                    if (!(bool) $get('validacion')) return;
+
                                     $montoTotalPago = (float) $get('cantidad_general');
                                     $totalAbonosUI = collect($value)->sum('monto');
 
@@ -208,7 +213,7 @@ class PagoForm
                                 'required' => 'Debe agregar al menos un abono si el depósito está validado.',
                                 'rules.0' => 'La suma total de los abonos excede el monto del depósito.',
                             ]),
-                    ]) 
+                    ])
             ]);
     }
 }

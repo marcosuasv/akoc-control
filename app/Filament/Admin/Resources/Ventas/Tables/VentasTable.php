@@ -17,7 +17,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\DatePicker;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
-use Illuminate\Support\Facades\DB; // AGREGADO: Importa la fachada DB
+use Illuminate\Support\Facades\DB;
 
 class VentasTable
 {
@@ -27,23 +27,22 @@ class VentasTable
             ->groups([
                 'departamento.desarrollo.nombre'
             ])
-            ->defaultGroup('departamento.desarrollo.nombre') // Aplica el grupo por defecto.
+            ->defaultGroup('departamento.desarrollo.nombre')
             ->columns([
-                // Columna para el departamento, ya la tenías bien configurada.
                 TextColumn::make('departamento.numero')
                     ->label('Depto.')
                     ->sortable()
                     ->searchable()
                     ->description(fn(Venta $record): string => "Modelo: {$record->departamento->modelo}"),
-                TextColumn::make('clientes.nombre')
+                
+                TextColumn::make('clientes.razon_social')
                     ->label('Cliente(s)')
-                    // ->badge() // 1. Quitas el estilo de badge
-                    ->bulleted() // 2. Usas este método para una lista con viñetas
-                    ->getStateUsing(fn($record) => $record->clientes->map(fn($cliente) => "{$cliente->nombre} {$cliente->apellidos}")->all())
+                    ->bulleted()
+                    ->getStateUsing(fn($record) => $record->clientes->map(fn($cliente) => $cliente->razon_social ?? "{$cliente->nombre} {$cliente->apellidos}")->all())
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->whereHas('clientes', function (Builder $q) use ($search) {
-                            // CORREGIDO: Usar \Illuminate\Support\Facades\DB o la importación
-                            $q->where(DB::raw("CONCAT(nombre, ' ', apellidos)"), 'like', "%{$search}%");
+                            $q->where('razon_social', 'like', "%{$search}%")
+                              ->orWhere(DB::raw("CONCAT(nombre, ' ', apellidos)"), 'like', "%{$search}%");
                         });
                     }),
 
@@ -62,16 +61,15 @@ class VentasTable
                      ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
                     ->sortable()
                     ->color('warning')
-                    ->toggleable(isToggledHiddenByDefault: false), // Oculto por defecto para limpiar la vista.
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('n_pagos')
                     ->label('N° Pagos')
                     ->numeric()
                     ->sortable()
                     ->badge()
-                    ->toggleable(isToggledHiddenByDefault: false), // Oculto por defecto.
+                    ->toggleable(isToggledHiddenByDefault: false),
 
-                // Las fechas de auditoría se mantienen al final y ocultas.
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -92,7 +90,6 @@ class VentasTable
                         false: fn(Builder $query) => $query->where('enganche', '=', 0),
                     ),
 
-                // Se mantiene el filtro de rango de fechas.
                 Filter::make('fecha')
                     ->form([
                         DatePicker::make('fecha_desde')->label('Ventas desde'),
@@ -111,7 +108,6 @@ class VentasTable
                     }),
             ])
             ->actions([
-                // 7. Acciones de Fila Agrupadas para una UI más limpia
                 ActionGroup::make([
                     ViewAction::make()->icon('heroicon-s-eye'),
                     EditAction::make()->icon('heroicon-s-pencil'),
@@ -123,6 +119,6 @@ class VentasTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('fecha', 'desc'); // Ordena por la venta más reciente primero.
+            ->defaultSort('fecha', 'desc');
     }
 }

@@ -77,6 +77,7 @@ class VentaInfolist
                             ->label('Estacionamientos')
                             ->icon('heroicon-s-truck'),
                     ]),
+                
                 Section::make('Cliente(s) de la Venta')
                     ->icon('heroicon-s-users')
                     ->collapsible() 
@@ -87,10 +88,26 @@ class VentaInfolist
                             ->schema([
                                 Grid::make(2)
                                     ->schema([
-                                        TextEntry::make('nombre_completo')
-                                            ->label('Nombre Cliente')
-                                            ->getStateUsing(fn(\App\Models\Cliente $record): string => "{$record->nombre} {$record->apellidos}")
+                                        TextEntry::make('razon_social')
+                                            ->label('Cliente / Razón Social')
+                                            ->weight('bold')
                                             ->columnSpanFull() 
+                                            ->icon('heroicon-s-building-office'),
+
+                                        TextEntry::make('rfc')
+                                            ->label('RFC')
+                                            ->fontFamily('mono')
+                                            ->icon('heroicon-s-identification'),
+
+                                        TextEntry::make('tipo_persona')
+                                            ->label('Tipo')
+                                            ->badge()
+                                            ->formatStateUsing(fn (string $state): string => $state === 'moral' ? 'Moral' : 'Física')
+                                            ->color(fn (string $state): string => $state === 'moral' ? 'info' : 'success'),
+
+                                        TextEntry::make('contacto_completo')
+                                            ->label('Persona de Contacto')
+                                            ->getStateUsing(fn(\App\Models\Cliente $record): string => "{$record->nombre} {$record->apellidos}")
                                             ->icon('heroicon-s-user'),
 
                                         TextEntry::make('correo')
@@ -113,6 +130,7 @@ class VentaInfolist
                                     ])
                             ])
                     ]),
+                
                 Section::make('Información del Desarrollo (Proyecto)')
                     ->icon('heroicon-s-building-office-2')
                     ->columns(3)
@@ -177,7 +195,7 @@ class VentaInfolist
                                         TextEntry::make('monto')
                                             ->label('Monto Cuota')
                                             ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2)),
-                                        
+                                            
                                         TextEntry::make('saldo') 
                                             ->label('Saldo Pendiente')
                                             ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2))
@@ -228,7 +246,6 @@ class VentaInfolist
                                                                 return '#';
                                                             })
                                                             ->openUrlInNewTab()
-
                                                             ->color('info'),
                                                         
                                                         TextEntry::make('fecha_abono')

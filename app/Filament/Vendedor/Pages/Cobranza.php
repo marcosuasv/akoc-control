@@ -11,9 +11,11 @@ use App\Models\Desarrollo;
 use Carbon\Carbon;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Livewire\WithPagination;
 
 class Cobranza extends Page
 {
+    use WithPagination;
     protected static string|BackedEnum|null $navigationIcon = Heroicon::CurrencyDollar;
     protected static string|UnitEnum|null $navigationGroup = 'Depositos y Finanzas';
     protected string $view = 'filament.vendedor.pages.cobranza';

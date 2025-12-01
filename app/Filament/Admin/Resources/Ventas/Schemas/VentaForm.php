@@ -20,6 +20,7 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use App\Models\Cliente;
 use Filament\Forms\Components\Repeater\TableColumn;
+use Filament\Forms\Components\Component;
 
 class VentaForm
 {
@@ -263,21 +264,17 @@ class VentaForm
                 ->columns(2),
 
             Section::make('Plan de Pagos Detallado')
-                ->description('Aquí puedes editar individualmente cada pago antes de guardar.')
+                ->description('Aquí puedes editar individualmente cada pago. Al modificar un monto, los pagos siguientes se ajustarán automáticamente.')
                 ->columnSpanFull()
                 ->schema([
                     Repeater::make('planPagos')
                         ->label('Plan de Pagos')
                         ->relationship()
                         ->table([
-                            TableColumn::make('# Pago')
-                                ->width('100px'),
-                            TableColumn::make('Fecha Vencimiento')
-                                ->width('80px'),
-                            TableColumn::make('Monto')
-                                ->width('100px'),
-                            TableColumn::make('Estatus')
-                                ->width('100px'),
+                            TableColumn::make('# Pago')->width('100px'),
+                            TableColumn::make('Fecha Vencimiento')->width('80px'),
+                            TableColumn::make('Monto')->width('100px'),
+                            TableColumn::make('Estatus')->width('100px'),
                         ])
                         ->schema([
                             TextInput::make('numero_pago')
@@ -297,7 +294,72 @@ class VentaForm
                                 ->prefix('$')
                                 ->label('Monto')
                                 ->hiddenLabel()
-                                ->required(),
+                                ->required()
+                                // 1. Activamos la reactividad al salir del campo
+                                ->live(onBlur: true)
+                                // 2. Lógica de redistribución
+                                ->afterStateUpdated(function (Get $get, Set $set, ?string $state, TextInput $component) {
+                                    // A. Obtener totales globales
+                                    $totalVenta = (float) $get('../../monto_total_venta');
+                                    $enganche = (float) $get('../../enganche');
+                                    $totalAFinanciar = $totalVenta - $enganche;
+
+                                    // B. Obtener todas las filas del repeater
+                                    $filas = $get('../../planPagos');
+
+                                    // C. Identificar qué fila estamos editando
+                                    // El statePath suele ser algo como: mountedTableActionsData.planPagos.uuid-123.monto
+                                    // Obtenemos el UUID de la fila actual
+                                    $pathParts = explode('.', $component->getStatePath());
+                                    // El UUID es el penúltimo elemento (antes de 'monto')
+                                    $uuidActual = $pathParts[count($pathParts) - 2];
+
+                                    $acumulado = 0;
+                                    $pasadoActual = false;
+                                    $uuidsRestantes = [];
+
+                                    // D. Iterar para calcular cuánto llevamos y cuántos faltan
+                                    foreach ($filas as $uuid => $fila) {
+                                        if (!$pasadoActual) {
+                                            // Sumamos los montos de las filas anteriores y la actual
+                                            $montoFila = (float) $fila['monto'];
+                                            $acumulado += $montoFila;
+
+                                            if ($uuid == $uuidActual) {
+                                                $pasadoActual = true;
+                                            }
+                                        } else {
+                                            // Guardamos los UUIDs de las filas futuras para editarlas
+                                            $uuidsRestantes[] = $uuid;
+                                        }
+                                    }
+
+                                    // E. Calcular cuánto falta por pagar
+                                    $saldoRestante = $totalAFinanciar - $acumulado;
+                                    $cantidadRestante = count($uuidsRestantes);
+
+                                    // F. Redistribuir el saldo restante equitativamente
+                                    if ($cantidadRestante > 0) {
+                                        // Evitar división por cero o montos negativos extraños
+                                        $nuevoMonto = $saldoRestante / $cantidadRestante;
+                                        $nuevoMontoRedondeado = round($nuevoMonto, 2);
+
+                                        foreach ($uuidsRestantes as $index => $uuid) {
+                                            // Ajuste de centavos en el último pago para que cuadre exacto
+                                            if ($index === $cantidadRestante - 1) {
+                                                // Calculamos lo que ya asignamos en este bucle de redistribución
+                                                $asignadoEnBucle = $nuevoMontoRedondeado * ($cantidadRestante - 1);
+                                                $montoFinal = round($saldoRestante - $asignadoEnBucle, 2);
+                                                $filas[$uuid]['monto'] = $montoFinal;
+                                            } else {
+                                                $filas[$uuid]['monto'] = $nuevoMontoRedondeado;
+                                            }
+                                        }
+
+                                        // G. Guardar el array modificado
+                                        $set('../../planPagos', $filas);
+                                    }
+                                }),
 
                             Select::make('status')
                                 ->options(['pendiente' => 'Pendiente', 'pagado' => 'Pagado'])
@@ -312,7 +374,6 @@ class VentaForm
                         ->deletable()
                         ->addable()
                         ->columnSpanFull()
-
                 ]),
         ]);
     }

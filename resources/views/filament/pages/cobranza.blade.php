@@ -1,4 +1,4 @@
-<x-filament-panels::page>    
+<x-filament-panels::page>
     <div style="background-color: #ffffff; border-radius: 0.75rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);">
         
         <div style="padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
@@ -8,10 +8,7 @@
         </div>
         
         <div style="padding: 1.5rem;">
-
-            <!-- ================================= -->
-            <!-- ===== INICIO: FILTRO NUEVO ====== -->
-            <!-- ================================= -->
+            {{-- FILTRO --}}
             <div style="margin-bottom: 1.5rem;">
                 <label for="desarrollo_filter" style="display: block; font-size: 0.875rem; font-weight: 500; color: #111827; margin-bottom: 0.5rem;">
                     Filtrar por Proyecto
@@ -26,14 +23,10 @@
                     @endforeach
                 </select>
             </div>
-            <!-- ================================= -->
-            <!-- ======== FIN: FILTRO NUEVO ======== -->
-            <!-- ================================= -->
 
-
+            {{-- TABLA --}}
             <div style="overflow-x: auto;">
                 <table style="width: 100%; text-align: left; font-size: 0.875rem; color: #6b7280;">
-                    
                     <thead style="font-size: 0.75rem; text-transform: uppercase; color: #374151; background-color: #f9fafb;">
                         <tr>
                             <th scope="col" style="padding: 0.75rem 1.5rem;">Mes</th>
@@ -43,10 +36,7 @@
                             <th scope="col" style="padding: 0.75rem 1.5rem;">Cuotas Vencidas</th>
                         </tr>
                     </thead>
-
                     <tbody>
-                        
-                        {{-- ========= FILA 1: TOTAL VENCIDO (Ahora usa la prop. computada) ========= --}}
                         <tr style="background-color: #fef2f2; border-bottom: 2px solid #dc2626;">
                             <th scope="row" style="padding: 1rem 1.5rem; font-weight: 700; color: #991b1b; white-space: nowrap;">
                                 Saldo Vencido
@@ -65,10 +55,8 @@
                             </td>
                         </tr>
 
-                        {{-- ========= FILA 2: PROYECCIÓN (PAGINADA) ========= --}}
                         @forelse ($this->proyeccionPaginada as $mes)
                             <tr style="background-color: #ffffff; border-bottom: 1px solid #e5e7eb;">
-                                
                                 <th scope="row" style="padding: 1rem 1.5rem; font-weight: 500; color: #111827; white-space: nowrap;">
                                     {{ $mes['mes'] }}
                                 </th>
@@ -100,11 +88,37 @@
                 </table>
             </div>
 
-            {{-- ========= 3. ENLACES DE PAGINACIÓN ========= --}}
-            <div style="padding-top: 1rem;">
-                {{ $this->proyeccionPaginada->links() }}
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1.5rem;">
+                
+                {{-- Botón Anterior --}}
+                <div>
+                    @if(!$this->proyeccionPaginada->onFirstPage())
+                        <button type="button" 
+                                wire:click="gotoPage({{ $this->proyeccionPaginada->currentPage() - 1 }})" 
+                                style="background-color: #f3f4f6; border: 1px solid #d1d5db; color: #374151; padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; cursor: pointer;">
+                            ← Anterior
+                        </button>
+                    @endif
+                </div>
+
+                {{-- Contador de Páginas --}}
+                <div style="font-size: 0.875rem; color: #6b7280;">
+                    Página {{ $this->proyeccionPaginada->currentPage() }}
+                </div>
+
+                {{-- Botón Siguiente --}}
+                <div>
+                    @if($this->proyeccionPaginada->hasMorePages())
+                        <button type="button" 
+                                wire:click="gotoPage({{ $this->proyeccionPaginada->currentPage() + 1 }})" 
+                                style="background-color: #f3f4f6; border: 1px solid #d1d5db; color: #374151; padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; cursor: pointer;">
+                            Siguiente →
+                        </button>
+                    @endif
+                </div>
+                
             </div>
+
         </div>
     </div>
-
 </x-filament-panels::page>

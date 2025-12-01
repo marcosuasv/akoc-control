@@ -39,7 +39,7 @@
             vertical-align: top;
         }
         .logo-cell {
-            width: 30%;
+            width: 40%;
             text-align: left;
         }
         .logo-cell img {
@@ -48,7 +48,7 @@
             max-height: 160px;
         }
         .company-info {
-            width: 40%;
+            width: 50%;
             font-size: 10px;
             color: #555;
         }
@@ -150,7 +150,7 @@
             <tr>
                 <td class="logo-cell">
                     @php
-                        $logoPath1 = public_path('images/ENTREPISO.png');
+                        $logoPath1 = public_path('images/logoepiso.png');
                     @endphp
 
                     @if(file_exists($logoPath1))
@@ -169,7 +169,7 @@
                         {{ mb_convert_encoding('HIDALMA', 'HTML-ENTITIES', 'UTF-8') }}
                     </p>
                     <p>
-                        {{ mb_convert_encoding('RFC: XXX010101XXX', 'HTML-ENTITIES', 'UTF-8') }}
+                        {{ mb_convert_encoding('RFC: IAK010302C36', 'HTML-ENTITIES', 'UTF-8') }}
                     </p>
                     <p>
                         {{ mb_convert_encoding('Av. Miguel Hidalgo y Costilla 2752, Vallarta Nte.', 'HTML-ENTITIES', 'UTF-8') }}
@@ -177,7 +177,7 @@
                     <p>
                         {{ mb_convert_encoding('C.P. 44690 Guadalajara, Jal.', 'HTML-ENTITIES', 'UTF-8') }}
                     </p>
-                    <p>Tel: (33 ) 3218 1961</p>
+                    <p>Tel: (33) 3956 1083</p>
                     <p>www.hidalmaminerva.com</p>
                 </td>
             </tr>
@@ -204,9 +204,18 @@
                     @php
                         $clientePrincipal = $venta->clientes->first();
                     @endphp
+                    
                     <td class="align-top">
                         @if($clientePrincipal)
-                            <p><strong>Cliente:</strong> {{ mb_convert_encoding("{$clientePrincipal->nombre} {$clientePrincipal->apellidos}", 'HTML-ENTITIES', 'UTF-8') }}</p>
+                            {{-- Nombre Legal (Razón Social o Nombre Completo Fiscal) --}}
+                            <p><strong>Cliente:</strong> {{ mb_convert_encoding($clientePrincipal->razon_social ?? "{$clientePrincipal->nombre} {$clientePrincipal->apellidos}", 'HTML-ENTITIES', 'UTF-8') }}</p>
+                            
+                            {{-- RFC del Cliente --}}
+                            <p><strong>RFC:</strong> {{ mb_convert_encoding($clientePrincipal->rfc ?? 'N/A', 'HTML-ENTITIES', 'UTF-8') }}</p>
+                            
+                            {{-- Contacto (Persona que atiende) --}}
+                            <p><strong>Atención:</strong> {{ mb_convert_encoding("{$clientePrincipal->nombre} {$clientePrincipal->apellidos}", 'HTML-ENTITIES', 'UTF-8') }}</p>
+
                             <p><strong>Correo:</strong> {{ mb_convert_encoding($clientePrincipal->correo ?? 'N/A', 'HTML-ENTITIES', 'UTF-8') }}</p>
                             <p><strong>Teléfono:</strong> {{ mb_convert_encoding($clientePrincipal->telefono ?? 'N/A', 'HTML-ENTITIES', 'UTF-8') }}</p>
                         @else
@@ -216,7 +225,6 @@
                             <p><strong>Otros Clientes:</strong> {{ $venta->clientes->count() - 1 }} más.</p>
                         @endif
                     </td>
-
                     <td class="align-top">
                         @if($venta->departamento)
                             <p><strong>Proyecto:</strong> {{ mb_convert_encoding($venta->departamento->desarrollo->nombre ?? 'N/A', 'HTML-ENTITIES', 'UTF-8') }}</p>

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 use App\Models\Abono;
 use App\Observers\AbonoObserver;
 
@@ -22,6 +23,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Abono::observe(AbonoObserver::class);
+
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
        
     }
 

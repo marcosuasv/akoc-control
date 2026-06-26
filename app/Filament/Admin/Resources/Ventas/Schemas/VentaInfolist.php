@@ -9,6 +9,8 @@ use Filament\Schemas\Components\Grid;
 use Filament\Infolists\Components\RepeatableEntry;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use App\Filament\Admin\Resources\Pagos\PagoResource;
+
 
 class VentaInfolist
 {
@@ -27,12 +29,12 @@ class VentaInfolist
 
                         TextEntry::make('monto_total_venta')
                             ->label('Monto Total de la Venta')
-                            ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
+                            ->formatStateUsing(fn(float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
                             ->icon('heroicon-s-currency-dollar'),
 
                         TextEntry::make('enganche')
                             ->label('Enganche')
-                            ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
+                            ->formatStateUsing(fn(float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
                             ->icon('heroicon-s-banknotes'),
 
                         TextEntry::make('n_pagos')
@@ -59,10 +61,10 @@ class VentaInfolist
                             ->label('Modelo'),
                         TextEntry::make('precio')
                             ->label('Precio de Lista')
-                            ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN'),
+                            ->formatStateUsing(fn(float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN'),
                         TextEntry::make('m2_construccion')
                             ->label('Precio M²')
-                             ->money(currency: 'MXN', locale: 'es_MX') 
+                            ->money(currency: 'MXN', locale: 'es_MX')
                             ->suffix('/ m²'),
                         TextEntry::make('m2_terraza')
                             ->label('M² Terraza')
@@ -77,21 +79,21 @@ class VentaInfolist
                             ->label('Estacionamientos')
                             ->icon('heroicon-s-truck'),
                     ]),
-                
+
                 Section::make('Cliente(s) de la Venta')
                     ->icon('heroicon-s-users')
-                    ->collapsible() 
+                    ->collapsible()
                     ->schema([
                         RepeatableEntry::make('clientes')
-                            ->label('') 
-                            ->grid(1) 
+                            ->label('')
+                            ->grid(1)
                             ->schema([
                                 Grid::make(2)
                                     ->schema([
                                         TextEntry::make('razon_social')
                                             ->label('Cliente / Razón Social')
                                             ->weight('bold')
-                                            ->columnSpanFull() 
+                                            ->columnSpanFull()
                                             ->icon('heroicon-s-building-office'),
 
                                         TextEntry::make('rfc')
@@ -102,8 +104,8 @@ class VentaInfolist
                                         TextEntry::make('tipo_persona')
                                             ->label('Tipo')
                                             ->badge()
-                                            ->formatStateUsing(fn (string $state): string => $state === 'moral' ? 'Moral' : 'Física')
-                                            ->color(fn (string $state): string => $state === 'moral' ? 'info' : 'success'),
+                                            ->formatStateUsing(fn(string $state): string => $state === 'moral' ? 'Moral' : 'Física')
+                                            ->color(fn(string $state): string => $state === 'moral' ? 'info' : 'success'),
 
                                         TextEntry::make('contacto_completo')
                                             ->label('Persona de Contacto')
@@ -113,13 +115,13 @@ class VentaInfolist
                                         TextEntry::make('correo')
                                             ->label('Correo')
                                             ->icon('heroicon-s-envelope')
-                                            ->copyable() 
+                                            ->copyable()
                                             ->placeholder('N/A'),
 
                                         TextEntry::make('telefono')
                                             ->label('Teléfono')
                                             ->icon('heroicon-s-phone')
-                                            ->copyable() 
+                                            ->copyable()
                                             ->placeholder('N/A'),
 
                                         TextEntry::make('direccion')
@@ -130,11 +132,11 @@ class VentaInfolist
                                     ])
                             ])
                     ]),
-                
+
                 Section::make('Información del Desarrollo (Proyecto)')
                     ->icon('heroicon-s-building-office-2')
                     ->columns(3)
-                    ->collapsible( ) 
+                    ->collapsible()
                     ->schema([
                         TextEntry::make('departamento.desarrollo.nombre')
                             ->label('Nombre del Proyecto')
@@ -176,63 +178,93 @@ class VentaInfolist
                 Section::make('Plan de Pagos')
                     ->icon('heroicon-s-table-cells')
                     ->columnSpanFull()
-                    ->collapsible() 
+                    ->collapsible()
                     ->schema([
-                        RepeatableEntry::make('planPagos') 
-                            ->label('') 
+                        RepeatableEntry::make('planPagos')
+                            ->label('')
                             ->columnSpanFull()
                             ->schema([
-                                Grid::make(5) 
+                                Grid::make(6)
                                     ->schema([
                                         TextEntry::make('numero_pago')
                                             ->label('# Pago')
                                             ->badge(),
-                                            
+
                                         TextEntry::make('fecha_vencimiento')
                                             ->label('Vencimiento')
                                             ->date('d/m/Y'),
-                                            
+
                                         TextEntry::make('monto')
                                             ->label('Monto Cuota')
-                                            ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2)),
-                                            
-                                        TextEntry::make('saldo') 
+                                            ->formatStateUsing(fn(float $state): string => '$' . number_format($state, 2)),
+
+                                        TextEntry::make('saldo')
                                             ->label('Saldo Pendiente')
-                                            ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2))
+                                            ->formatStateUsing(fn(float $state): string => '$' . number_format($state, 2))
                                             ->color('warning')
-                                            ->visible(fn ($record) => $record->status !== 'pagado'), 
+                                            ->visible(fn($record) => $record->status !== 'pagado'),
 
                                         TextEntry::make('status')
                                             ->label('Estatus')
                                             ->badge()
                                             ->color(fn(string $state): string => match ($state) {
                                                 'pagado' => 'success',
-                                                'parcial' => 'info', 
+                                                'parcial' => 'info',
                                                 'pendiente' => 'warning',
                                                 default => 'gray',
                                             })
-                                            ->formatStateUsing(fn(string $state): string => match ($state) { 
+                                            ->formatStateUsing(fn(string $state): string => match ($state) {
                                                 'pagado' => 'Pagado',
                                                 'parcial' => 'Parcial',
                                                 'pendiente' => 'Pendiente',
                                                 default => ucfirst($state),
                                             }),
+                                        TextEntry::make('registrar_abono')
+                                            ->label('Acción')
+                                            ->state('Registrar Abono')
+                                            ->badge() // Para que parezca botón
+                                            ->color('info')
+                                            ->icon('heroicon-o-currency-dollar')
+                                            ->visible(fn($record) => $record->status !== 'pagado') // Solo si debe dinero
+                                            ->url(function ($record) {
+                                                // 1. Obtener la URL base de creación de pagos
+                                                $url = PagoResource::getUrl('create');
+
+                                                // 2. Obtener datos (Cliente y Saldo Pendiente)
+                                                // Asumimos que $record es el PlanPago y tiene relación con venta
+                                                $cliente = $record->venta->clientes->first();
+                                                $saldoPendiente = $record->saldo;
+
+                                                // 3. Construir parámetros URL
+                                                $params = [];
+
+                                                if ($cliente) {
+                                                    $params['cliente_id'] = $cliente->id;
+                                                }
+
+                                                if ($saldoPendiente > 0) {
+                                                    $params['cantidad_general'] = $saldoPendiente;
+                                                }
+                                                // 4. Retornar URL con query string
+                                                return $url . '?' . http_build_query($params);
+                                            })
+                                            ->openUrlInNewTab(), // Opcional: abrir en pestaña nueva
                                     ]),
 
                                 Section::make('Abonos Recibidos en esta Cuota')
                                     ->icon('heroicon-s-clipboard-document-list')
-                                    ->collapsible() 
-                                    ->collapsed()   
+                                    ->collapsible()
+                                    ->collapsed()
                                     ->columnSpanFull()
-                                    ->visible(fn ($record) => $record->abonos->count() > 0)
+                                    ->visible(fn($record) => $record->abonos->count() > 0)
                                     ->schema([
-                                        RepeatableEntry::make('abonos') 
+                                        RepeatableEntry::make('abonos')
                                             ->label('')
                                             ->columnSpanFull()
                                             ->schema([
                                                 Grid::make(4)
                                                     ->schema([
-                                                        TextEntry::make('pago.id') 
+                                                        TextEntry::make('pago.id')
                                                             ->label('ID Depósito')
                                                             ->badge()
                                                             ->url(function (Model $record): string {
@@ -247,15 +279,15 @@ class VentaInfolist
                                                             })
                                                             ->openUrlInNewTab()
                                                             ->color('info'),
-                                                        
+
                                                         TextEntry::make('fecha_abono')
                                                             ->label('Fecha del Abono')
                                                             ->date('d/m/Y'),
 
                                                         TextEntry::make('monto')
                                                             ->label('Monto Abonado')
-                                                            ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2)),
-                                                        
+                                                            ->formatStateUsing(fn(float $state): string => '$' . number_format($state, 2)),
+
                                                         TextEntry::make('user.name')
                                                             ->label('Registrado por')
                                                             ->placeholder('N/A'),
@@ -266,4 +298,5 @@ class VentaInfolist
                     ]),
             ]);
     }
+
 }

@@ -27,6 +27,16 @@ Route::get('/ver-comprobante/{filename}', function ($filename) {
 
     return response()->file($path);
 })->name('ver-comprobante');
+
+Route::get('/galeria/{path}', function ($path) {
+    $fullPath = storage_path('app/private/' . $path);
+    
+    abort_unless(file_exists($fullPath), 404);
+    abort_unless(auth()->check(), 403);
+    
+    return response()->file($fullPath);
+})->where('path', '.*')->name('galeria-file');
+
 Route::get('/ventas/{venta}/estado-de-cuenta', [EstadoDeCuentaController::class, 'show'])
     ->name('ventas.estado-de-cuenta')
     ->middleware('auth');

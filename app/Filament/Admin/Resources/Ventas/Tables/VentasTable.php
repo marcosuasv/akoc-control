@@ -8,13 +8,13 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use App\Models\Departamento;
 use App\Models\Venta;
-use App\Models\Desarrollo;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Illuminate\Support\Facades\DB;
@@ -53,12 +53,12 @@ class VentasTable
 
                 TextColumn::make('monto_total_venta')
                     ->label('Monto Total')
-                      ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
-                     ->color('success')
-                      ->sortable(),
+                    ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
+                    ->color('success')
+                    ->sortable(),
 
                 TextColumn::make('enganche')
-                     ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
+                    ->formatStateUsing(fn (float $state): string => '$' . number_format($state, 2, '.', ',') . ' MXN')
                     ->sortable()
                     ->color('warning')
                     ->toggleable(isToggledHiddenByDefault: false),
@@ -80,6 +80,13 @@ class VentasTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('clientes')
+                    ->label('Cliente')
+                    ->relationship('clientes', 'razon_social')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->razon_social ?? "{$record->nombre} {$record->apellidos}")
+                    ->searchable()
+                    ->preload(),
+
                 TernaryFilter::make('enganche')
                     ->label('Tiene Enganche')
                     ->boolean()

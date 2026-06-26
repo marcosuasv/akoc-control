@@ -1,25 +1,58 @@
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
+        # -MultiViews evita que Apache intente adivinar rutas si falta la extensión
+        # -Indexes prohíbe el listado de archivos en carpetas
         Options -MultiViews -Indexes
     </IfModule>
 
     RewriteEngine On
 
-    # Handle Authorization Header
+    # 1. FORZAR HTTPS (Opcional pero recomendado)
+    # Si tienes SSL, descomenta las siguientes dos líneas:
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # 2. MANEJO DE CABECERA DE AUTORIZACIÓN
+    # Pasa el token de Authorization a PHP (necesario para APIs)
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-    # Handle X-XSRF-Token Header
-    RewriteCond %{HTTP:x-xsrf-token} .
-    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
-
-    # Redirect Trailing Slashes If Not A Folder...
+    # 3. REDIRECCIONAR SLASHES FINALES
+    # Quita la barra inclinada al final si no es una carpeta real
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
-    # Send Requests To Front Controller...
+    # 4. FRONT CONTROLLER
+    # Si el archivo o carpeta solicitado no existe, envía todo a index.php
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+</IfModule>
+
+# 5. BLOQUEO DE ARCHIVOS SENSIBLES
+# Evita que alguien descargue el .env, logs, backups o archivos de configuración
+<FilesMatch "^\.env|.*\.log$|.*\.sql$|composer\.(json|lock)$|^\.git">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# 6. CABECERAS DE SEGURIDAD (HTTP Security Headers)
+<IfModule mod_headers.c>
+    # Previene ataques de Clickjacking (impide que carguen tu web en iframes ajenos)
+    Header set X-Frame-Options "SAMEORIGIN"
+    
+    # Previene que el navegador adivine el tipo de contenido (MIME-sniffing)
+    Header set X-Content-Type-Options "nosniff"
+    
+    # Activa el filtro de protección contra XSS en navegadores antiguos
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Controla cuánta información de tu sitio se envía al hacer clic en enlaces externos
+    Header set Referrer-Policy "no-referrer-when-downgrade"
 </IfModule>

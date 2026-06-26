@@ -11,12 +11,11 @@ class CreatePago extends CreateRecord
     protected static string $resource = PagoResource::class;
     public function mount(): void
     {
-        $clienteId = request()->query('cliente_id');
         parent::mount();
-        if ($clienteId) {
-            $this->form->fill([
-                'cliente_id' => $clienteId,
-            ]);
-        }
+        $this->form->fill([
+            'cliente_id' => request()->query('cliente_id'),
+            'cantidad_general' => request()->query('cantidad_general'),
+            // Si tienes otros campos que quieras llenar, agrégalos aquí
+        ]);
     }
 }

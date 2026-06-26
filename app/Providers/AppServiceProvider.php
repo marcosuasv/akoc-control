@@ -22,5 +22,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Abono::observe(AbonoObserver::class);
+       
     }
+
+    protected $policies = [
+        \App\Models\Cotizacion::class => \App\Policies\CotizacionPolicy::class,
+    ];
 }

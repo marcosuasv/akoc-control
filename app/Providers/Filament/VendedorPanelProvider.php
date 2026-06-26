@@ -6,12 +6,13 @@ use App\Filament\Admin\Resources\Abonos\AbonoResource;
 use App\Filament\Admin\Resources\Departamentos\DepartamentoResource;
 use App\Filament\Admin\Resources\Desarrollos\DesarrolloResource;
 use App\Filament\Admin\Resources\Pagos\PagoResource;
+use App\Filament\Resources\CotizacionResource;
 use App\Models\Departamento;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
+//use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -26,7 +27,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Resma\FilamentAwinTheme\FilamentAwinTheme;
 use App\Filament\Admin\Resources\Clientes\ClienteResource;
 use App\Filament\Admin\Resources\Ventas\VentaResource;
-
+use App\Filament\Vendedor\Pages\Dashboard;
 class VendedorPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
@@ -46,7 +47,7 @@ class VendedorPanelProvider extends PanelProvider
             ->favicon(fn() => asset('images/icono.png'))
             ->discoverWidgets(in: app_path('Filament/Vendedor/Widgets'), for: 'App\Filament\Vendedor\Widgets')
             ->widgets([
-                AccountWidget::class,
+                //AccountWidget::class, ocultamos el widget de cuenta
                 //FilamentInfoWidget::class,
                 //\App\Filament\Widgets\ListadoCobranzaWidget::class,
             ])

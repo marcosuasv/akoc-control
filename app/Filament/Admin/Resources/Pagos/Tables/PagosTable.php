@@ -102,21 +102,12 @@ class PagosTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Filter::make('cliente_nombre')
-                    ->label('Cliente / Razón Social')
-                    ->form([
-                        TextInput::make('nombre')->label('Buscar por Razón Social o Nombre')
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query->when(
-                            $data['nombre'],
-                            fn(Builder $query, $nombre) => $query->where(function ($q) use ($nombre) {
-                                $q->where('clientes.razon_social', 'like', "%{$nombre}%")
-                                  ->orWhere('clientes.nombre', 'like', "%{$nombre}%")
-                                  ->orWhere('clientes.apellidos', 'like', "%{$nombre}%");
-                            })
-                        );
-                    }),
+                SelectFilter::make('cliente_id')
+                    ->label('Cliente')
+                    ->relationship('cliente', 'razon_social')
+                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->razon_social ?? "{$record->nombre} {$record->apellidos}")
+                    ->searchable()
+                    ->preload(),
                 Filter::make('fecha')
                     ->label('Rango de Fechas')
                     ->form([

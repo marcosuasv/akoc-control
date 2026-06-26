@@ -82,17 +82,17 @@ class DepartamentoForm
                     ]),
 
              
-    /*                 Section::make('Galería de Imágenes')
+                 Section::make('Galería de Imágenes')
                     ->schema([
                         FileUpload::make('galeria')
                             ->multiple()       
-                            ->directory('departamentos-galeria') 
+                            ->directory('private/departamentos-galeria') 
                             ->image()         
                             ->reorderable()    
                             ->imageEditor()   
                             ->maxSize(2048),   
                     ]), 
-                     */
+                     
             ]);
   
     }

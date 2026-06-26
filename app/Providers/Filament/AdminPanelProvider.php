@@ -75,7 +75,10 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
                 CheckIsAdmin::class,
-            ]);
+            ])
+            ->resources([
+            \App\Filament\Admin\Resources\Cotizacions\CotizacionResource::class,
+        ]);
     }
 
 }
